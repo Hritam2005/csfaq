@@ -5,10 +5,12 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
 
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { AuthService } from '../../services/AuthService';
+import { setCredentials } from '../../store/slices/authSlice';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,6 +32,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -56,8 +59,26 @@ export const RegisterPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // This is a placeholder for Google Login integration
-    toast.info('Google login is not yet configured. Please create an account.');
+    const email = prompt("Google Sign-In Mock\n\nPlease enter a Google Email address:");
+    if (!email) return;
+    const name = email.split('@')[0];
+    
+    toast.promise(
+      AuthService.googleLogin(email, name).then((res) => {
+        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+        const role = res.data.user.role?.toLowerCase() || '';
+        if (role.includes('admin')) {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }),
+      {
+        loading: 'Authenticating with Google...',
+        success: 'Successfully registered and logged in with Google!',
+        error: (err) => err.response?.data?.message || 'Failed to authenticate with Google'
+      }
+    );
   };
 
   return (

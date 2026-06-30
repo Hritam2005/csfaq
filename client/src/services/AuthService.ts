@@ -19,6 +19,23 @@ export class AuthService {
     return response.data;
   }
 
+  static async googleLogin(email: string, name: string) {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+      deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('deviceId', deviceId);
+    }
+    const response = await apiClient.post('/auth/google', { 
+      email, 
+      name,
+      deviceId,
+      deviceName: navigator.userAgent.substring(0, 50),
+      browser: 'Web',
+      os: 'Unknown'
+    });
+    return response.data;
+  }
+
   static async register(data: any) {
     const response = await apiClient.post('/auth/register', data);
     return response.data;

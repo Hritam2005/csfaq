@@ -93,6 +93,47 @@ class AuthService {
   }
 
   /**
+   * Authenticate or register via Google
+   */
+  static async googleLogin(email, name, deviceInfo, ipAddress) {
+    let user = await UserRepository.findByEmail(email, true);
+
+    if (!user) {
+      let defaultRole = await Role.findOne({ name: 'Registered User' });
+      const username = email.split('@')[0] + Math.floor(Math.random() * 1000);
+      user = await UserRepository.create({
+        fullName: name || username,
+        username,
+        email,
+        password: crypto.randomBytes(32).toString('hex'),
+        role: defaultRole ? defaultRole._id : undefined,
+        accountStatus: 'active',
+      });
+    }
+
+    if (user.accountStatus !== 'active') {
+      throw ApiError.forbidden(`Account is ${user.accountStatus}`);
+    }
+
+    let device = await Device.findOne({ user: user._id, deviceId: deviceInfo.deviceId });
+    if (!device) {
+      device = await Device.create({
+        user: user._id,
+        ...deviceInfo,
+        ipAddress,
+      });
+      EmailService.sendSecurityAlert(user.email, `New Google login from ${deviceInfo.browser} on ${deviceInfo.os}. IP: ${ipAddress}`);
+    } else {
+      device.lastActive = new Date();
+      device.ipAddress = ipAddress;
+      await device.save();
+    }
+
+    const tokens = await JWTService.issueTokens(user, device._id);
+    return { user, tokens };
+  }
+
+  /**
    * Logout user by revoking refresh token
    */
   static async logout(refreshTokenString) {

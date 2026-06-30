@@ -76,6 +76,30 @@ export const login = asyncHandler(async (req, res) => {
   res.status(200).json(ApiResponse.success({ user: userData, token: tokens.accessToken }, 'Login successful'));
 });
 
+export const googleLogin = asyncHandler(async (req, res) => {
+  const { email, name, deviceId, deviceName, browser, os } = req.body;
+  const ipAddress = req.ip;
+
+  const deviceInfo = { deviceId, deviceName, browser, os };
+  
+  const { user, tokens } = await AuthService.googleLogin(email, name, deviceInfo, ipAddress);
+
+  res.cookie('accessToken', tokens.accessToken, cookieOptions);
+  res.cookie('refreshToken', tokens.refreshToken, refreshCookieOptions);
+
+  const userData = {
+    _id: user._id,
+    uuid: user.uuid,
+    fullName: user.fullName,
+    username: user.username,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role ? user.role.name : 'Registered User',
+  };
+
+  res.status(200).json(ApiResponse.success({ user: userData, token: tokens.accessToken }, 'Google Login successful'));
+});
+
 export const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
   

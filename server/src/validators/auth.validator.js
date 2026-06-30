@@ -19,3 +19,8 @@ export const loginValidation = [
 export const refreshValidation = [
   body('deviceId').notEmpty().withMessage('Device fingerprint is required'),
 ];
+
+export const googleLoginValidation = [
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+  body('deviceId').notEmpty().withMessage('Device fingerprint is required'),
+];

@@ -94,6 +94,28 @@ router.post(
 
 /**
  * @swagger
+ * /auth/google:
+ *   post:
+ *     summary: Authenticate via Google
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
+import { googleLogin } from '../controllers/auth.controller.js';
+import { googleLoginValidation } from '../validators/auth.validator.js';
+
+router.post(
+  '/google',
+  authLimiter,
+  googleLoginValidation,
+  validate,
+  auditAction('auth.google', 'User'),
+  googleLogin
+);
+
+/**
+ * @swagger
  * /auth/logout:
  *   post:
  *     summary: Logout user
