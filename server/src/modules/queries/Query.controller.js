@@ -11,7 +11,7 @@ export const submitQuery = async (req, res, next) => {
     }
 
     const query = await Query.create({
-      user: req.user.id,
+      user: req.user._id,
       question
     });
 
@@ -27,7 +27,7 @@ export const submitQuery = async (req, res, next) => {
 
 export const getMyQueries = async (req, res, next) => {
   try {
-    const queries = await Query.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const queries = await Query.find({ user: req.user._id }).sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
@@ -40,7 +40,7 @@ export const getMyQueries = async (req, res, next) => {
 
 export const getAllQueries = async (req, res, next) => {
   try {
-    const queries = await Query.find().populate('user', 'name email').sort({ createdAt: -1 });
+    const queries = await Query.find().populate('user', 'fullName email').sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
@@ -61,13 +61,24 @@ export const resolveQuery = async (req, res, next) => {
       {
         response,
         status: status || 'Resolved',
-        resolvedBy: req.user.id
+        resolvedBy: req.user._id
       },
       { new: true, runValidators: true }
     );
 
     if (!query) {
       throw new ApiError(404, 'Query not found');
+    }
+
+    try {
+      const { notificationService } = await import('../notifications/Notification.service.js');
+      await notificationService.notifyUser(query.user.toString(), {
+        title: 'Query Resolved',
+        message: `Your question has been resolved: ${response.substring(0, 50)}...`,
+        type: 'query_update'
+      });
+    } catch (socketErr) {
+      logger.error('Failed to send notification:', socketErr);
     }
 
     res.status(200).json({

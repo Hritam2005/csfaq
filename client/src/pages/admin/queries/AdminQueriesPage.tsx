@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HelpCircle, CheckCircle, XCircle, Search, Mail } from 'lucide-react';
-import axios from 'axios';
+import { apiClient } from '../../../services/axios';
 import { Button } from '../../../components/ui/Button';
 import toast from 'react-hot-toast';
 
@@ -9,7 +9,7 @@ interface UserQuery {
   _id: string;
   user: {
     _id: string;
-    name: string;
+    fullName: string;
     email: string;
   };
   question: string;
@@ -27,14 +27,14 @@ export const AdminQueriesPage: React.FC = () => {
   const { data: queries = [], isLoading } = useQuery<UserQuery[]>({
     queryKey: ['admin-queries'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/v1/queries', { withCredentials: true });
+      const { data } = await apiClient.get('/queries');
       return data.data;
     }
   });
 
   const resolveMutation = useMutation({
     mutationFn: async ({ id, response, status }: { id: string, response: string, status: string }) => {
-      await axios.patch(`/api/v1/queries/${id}/resolve`, { response, status }, { withCredentials: true });
+      await apiClient.patch(`/queries/${id}/resolve`, { response, status });
     },
     onSuccess: () => {
       toast.success('Query updated successfully');
@@ -49,7 +49,7 @@ export const AdminQueriesPage: React.FC = () => {
 
   const filteredQueries = queries.filter(q => 
     q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    q.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (q.user?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleResolve = (status: 'Resolved' | 'Dismissed') => {
@@ -99,7 +99,7 @@ export const AdminQueriesPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-start mb-1">
                       <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        {query.user.name}
+                        {query.user?.fullName || 'Unknown User'}
                         {query.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>}
                         {query.status === 'Resolved' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Resolved</span>}
                         {query.status === 'Dismissed' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Dismissed</span>}
@@ -124,8 +124,8 @@ export const AdminQueriesPage: React.FC = () => {
                     <HelpCircle className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">{selectedQuery.user.name}</h3>
-                    <p className="text-sm text-gray-500 flex items-center gap-1"><Mail className="h-3 w-3"/> {selectedQuery.user.email}</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">{selectedQuery.user?.fullName || 'Unknown User'}</h3>
+                    <p className="text-sm text-gray-500 flex items-center gap-1"><Mail className="h-3 w-3"/> {selectedQuery.user?.email}</p>
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">

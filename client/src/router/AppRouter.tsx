@@ -108,8 +108,6 @@ export const appRouter = createBrowserRouter([
       { path: 'history', element: <ActivityPage /> },
       { path: 'bookmarks', element: <ActivityPage /> },
       { path: 'collections', element: <ActivityPage /> },
-      { path: 'downloads', element: <ActivityPage /> },
-      { path: 'uploads', element: <ActivityPage /> },
       { path: 'achievements', element: <ActivityPage /> },
       { path: 'learning', element: <ActivityPage /> },
       { path: 'settings', element: <ActivityPage /> },

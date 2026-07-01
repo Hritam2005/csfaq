@@ -104,7 +104,7 @@ export const HomePage: React.FC = () => {
           <h2 className="text-3xl font-bold text-white">Ready to begin your journey?</h2>
           <p className="mt-4 text-primary-100 text-lg">Join the Vicharanashala Lab for Education Design today.</p>
           <div className="mt-8">
-            <Link to={isAuthenticated ? "/dashboard" : "/login"}>
+            <Link to={isAuthenticated ? (user?.role?.toLowerCase().includes('admin') ? "/admin/dashboard" : "/dashboard") : "/login"}>
               <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-50">
                 {isAuthenticated ? "Go to Dashboard" : "Access Platform"}
               </Button>

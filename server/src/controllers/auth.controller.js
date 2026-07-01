@@ -70,7 +70,7 @@ export const login = asyncHandler(async (req, res) => {
     username: user.username,
     email: user.email,
     avatar: user.avatar,
-    role: user.role.name,
+    role: user.role?.name || 'Registered User',
   };
 
   res.status(200).json(ApiResponse.success({ user: userData, token: tokens.accessToken }, 'Login successful'));
@@ -138,7 +138,7 @@ export const getProfile = asyncHandler(async (req, res) => {
     username: req.user.username,
     email: req.user.email,
     avatar: req.user.avatar,
-    role: req.user.role.name,
+    role: req.user.role?.name || 'Registered User',
     permissions: req.userPermissions,
   };
   res.status(200).json(ApiResponse.success(userData, 'Profile retrieved'));

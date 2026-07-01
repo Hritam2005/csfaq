@@ -4,6 +4,7 @@ import EmailService from './email.service.js';
 import ApiError from '../utils/ApiError.js';
 import VerificationToken from '../models/VerificationToken.js';
 import Device from '../models/Device.js';
+import Role from '../models/Role.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 

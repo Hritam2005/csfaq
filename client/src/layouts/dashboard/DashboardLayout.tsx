@@ -11,8 +11,6 @@ export const DashboardLayout: React.FC = () => {
     { name: 'Reading History', to: '/app/history', icon: History },
     { name: 'Saved Answers', to: '/app/bookmarks', icon: Bookmark },
     { name: 'Collections', to: '/app/collections', icon: Folder },
-    { name: 'Downloads', to: '/app/downloads', icon: Download },
-    { name: 'Uploads', to: '/app/uploads', icon: Upload },
     { name: 'Achievements', to: '/app/achievements', icon: Award },
     { name: 'Learning Progress', to: '/app/learning', icon: GraduationCap },
   ];

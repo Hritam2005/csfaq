@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiClient } from '../../services/axios';
 import { Button } from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
@@ -14,7 +14,7 @@ export const SupportPage: React.FC = () => {
   const { data: myQueries = [], refetch } = useQuery({
     queryKey: ['my-queries'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/v1/queries/my-queries', { withCredentials: true });
+      const { data } = await apiClient.get('/queries/my-queries');
       return data.data;
     },
     enabled: isAuthenticated
@@ -22,7 +22,7 @@ export const SupportPage: React.FC = () => {
 
   const submitMutation = useMutation({
     mutationFn: async (q: string) => {
-      await axios.post('/api/v1/queries', { question: q }, { withCredentials: true });
+      await apiClient.post('/queries', { question: q });
     },
     onSuccess: () => {
       toast.success('Question submitted successfully!');

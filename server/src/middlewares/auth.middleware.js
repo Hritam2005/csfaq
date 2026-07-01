@@ -43,7 +43,7 @@ export const authenticate = async (req, res, next) => {
 
     // Grant access to protected route
     req.user = currentUser;
-    req.userPermissions = currentUser.role.permissions.map(p => p.name);
+    req.userPermissions = currentUser.role?.permissions?.map(p => p.name) || [];
     
     next();
   } catch (error) {
@@ -61,7 +61,8 @@ export const requireRole = (...roles) => {
       return next(ApiError.unauthorized());
     }
 
-    if (!roles.includes(req.user.role.name) && req.user.role.name !== 'Super Admin') {
+    const userRole = req.user.role?.name || 'Registered User';
+    if (!roles.includes(userRole) && userRole !== 'Super Admin' && userRole !== 'System Administrator' && userRole !== 'Admin') {
       return next(ApiError.forbidden('You do not have the required role to perform this action.'));
     }
 
@@ -80,7 +81,8 @@ export const requirePermission = (permissionName) => {
     }
 
     // Super Admins bypass permission checks
-    if (req.user.role.name === 'Super Admin') {
+    const userRole = req.user.role?.name || 'Registered User';
+    if (userRole === 'Super Admin' || userRole === 'System Administrator' || userRole === 'Admin') {
       return next();
     }
 
