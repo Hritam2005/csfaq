@@ -14,21 +14,34 @@ export class OpenAIProvider extends LLMProvider {
       console.warn('OPENAI_API_KEY missing, using mock client');
       return null;
     }
-    return new OpenAI({ apiKey: env.OPENAI_API_KEY });
+    return new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      timeout: 30000,   // 30s timeout
+      maxRetries: 2,    // retry transient errors
+    });
   }
 
   async generate(messages, options = {}) {
     try {
       const client = this._getClient();
       if (!client) {
-        // Find context if available
-        const sysMsg = messages.find(m => m.role === 'system');
-        let answer = "I don't have an OpenAI key configured, but I received your message!";
-        if (sysMsg && sysMsg.content) {
-            if (sysMsg.content.includes('Context:')) {
-                answer = "Based on the provided PDF documents, I can tell you that the system has successfully retrieved context related to your query! However, without an OpenAI API key, I cannot synthesize a natural language response. Please check the retrieved context in the system.";
-            }
+        const userMessage = messages.findLast(m => m.role === 'user')?.content || '';
+        const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+        const contextMatch = systemMessage.match(/--- SOURCE ID: (.+?) ---([\s\S]*)/g) || [];
+        const contextEntries = (contextMatch || []).map(entry => entry.replace(/^--- SOURCE ID: .*? ---\s*/s, '').trim()).filter(Boolean);
+
+        let answer = `I don't have an OpenAI key configured, but I can still help from the available knowledge sources.\n\nYour question was: ${userMessage}\n\nI recommend checking the official documentation or FAQ, and if you share the exact topic, I can guide you more precisely.`;
+
+        if (contextEntries.length > 0) {
+          const firstEntry = contextEntries[0];
+          const sentence = firstEntry.split(/\n/).find(line => line.trim().length > 0) || firstEntry;
+          answer = `Based on the available knowledge sources, ${sentence.trim()}\n\nIf this is not enough for your question, please share a little more detail or the exact topic you want clarified.`;
         }
+
+        if (!answer.toLowerCase().includes('source')) {
+          answer += '\n\nIf you want, I can also help you refine this question or look for a specific document section.';
+        }
+
         return {
           content: answer,
           usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
@@ -47,6 +60,13 @@ export class OpenAIProvider extends LLMProvider {
         usage: response.usage,
       };
     } catch (error) {
+      console.error('[OpenAIProvider] generate() error:', {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        cause: error.cause?.message,
+        type: error.constructor?.name,
+      });
       throw new AIError(`OpenAI API Failed: ${error.message}`, ERROR_CODES.PROVIDER_FAILED);
     }
   }
@@ -55,11 +75,18 @@ export class OpenAIProvider extends LLMProvider {
     try {
       const client = this._getClient();
       if (!client) {
-        const sysMsg = messages.find(m => m.role === 'system');
-        let mockResponse = "I am a mock response because the OpenAI API Key is missing. However, the retrieval system is active.";
-        if (sysMsg && sysMsg.content && sysMsg.content.includes('Context:')) {
-            mockResponse = "Based on the PDF documents, I can see relevant context has been retrieved. Without an OpenAI API Key, I can't synthesize it completely, but the system is working!";
+        const userMessage = messages.findLast(m => m.role === 'user')?.content || '';
+        const systemMessage = messages.find(m => m.role === 'system')?.content || '';
+        const contextMatch = systemMessage.match(/--- SOURCE ID: (.+?) ---([\s\S]*)/g) || [];
+        const contextEntries = (contextMatch || []).map(entry => entry.replace(/^--- SOURCE ID: .*? ---\s*/s, '').trim()).filter(Boolean);
+        let mockResponse = `I can still help from the available knowledge sources. Your question was: ${userMessage}`;
+
+        if (contextEntries.length > 0) {
+          const firstEntry = contextEntries[0];
+          const sentence = firstEntry.split(/\n/).find(line => line.trim().length > 0) || firstEntry;
+          mockResponse = `Based on the available knowledge sources, ${sentence.trim()}\n\nIf this does not fully answer your question, please share more detail about the topic you want help with.`;
         }
+
         const words = mockResponse.split(' ');
         for (const word of words) {
             yield { content: word + ' ' };

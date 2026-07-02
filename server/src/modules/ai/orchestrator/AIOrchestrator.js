@@ -7,6 +7,7 @@ import { ConversationManager } from './ConversationManager.js';
 import { AIAnalytics } from '../analytics/AIAnalytics.js';
 import { ConfidenceCalculator } from '../analytics/ConfidenceCalculator.js';
 import { CitationBuilder } from '../../knowledge-engine/citations/CitationBuilder.js';
+import { ResponseGuard } from './ResponseGuard.js';
 
 export class AIOrchestrator {
   /**
@@ -17,6 +18,17 @@ export class AIOrchestrator {
 
     // 1. Sanitize & Security Check
     const cleanPrompt = PromptSanitizer.sanitize(prompt);
+    const guardResult = ResponseGuard.evaluate(cleanPrompt);
+
+    if (guardResult.shouldFilter) {
+      return {
+        conversationId: conversationId || null,
+        response: guardResult.reply,
+        citations: [],
+        confidence: { score: 0.2, rating: 'Low' },
+        suggestions: guardResult.suggestions,
+      };
+    }
 
     // 2. Manage Conversation Memory
     const conversation = await ConversationManager.getConversation(conversationId, user._id);
@@ -73,12 +85,23 @@ export class AIOrchestrator {
       response: response.content,
       citations,
       confidence,
+      suggestions: [],
     };
   }
 
   static async streamChat(prompt, conversationId, user, filters = {}, res) {
     const startTime = Date.now();
     const cleanPrompt = PromptSanitizer.sanitize(prompt);
+    const guardResult = ResponseGuard.evaluate(cleanPrompt);
+
+    if (guardResult.shouldFilter) {
+      res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: conversationId || null, citations: [] })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'chunk', text: guardResult.reply })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'done', confidence: { score: 0.2, rating: 'Low' }, suggestions: guardResult.suggestions })}\n\n`);
+      res.end();
+      return;
+    }
+
     const conversation = await ConversationManager.getConversation(conversationId, user._id);
     const history = ConversationManager.getRecentHistory(conversation, 4);
 
@@ -142,6 +165,15 @@ export class AIOrchestrator {
   static async streamChatSocket(prompt, conversationId, user, filters = {}, socket) {
     const startTime = Date.now();
     const cleanPrompt = PromptSanitizer.sanitize(prompt);
+    const guardResult = ResponseGuard.evaluate(cleanPrompt);
+
+    if (guardResult.shouldFilter) {
+      socket.emit('chat_metadata', { conversationId: conversationId || null, citations: [] });
+      socket.emit('chat_chunk', { text: guardResult.reply });
+      socket.emit('chat_done', { confidence: { score: 0.2, rating: 'Low' }, conversationId: conversationId || null, suggestions: guardResult.suggestions });
+      return;
+    }
+
     const conversation = await ConversationManager.getConversation(conversationId, user._id);
     const history = ConversationManager.getRecentHistory(conversation, 4);
 

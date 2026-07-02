@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HelpCircle, CheckCircle, XCircle, Search, Mail } from 'lucide-react';
+import { HelpCircle, CheckCircle, XCircle, Search, Mail, ShieldAlert } from 'lucide-react';
 import { apiClient } from '../../../services/axios';
 import { Button } from '../../../components/ui/Button';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 
 interface UserQuery {
   _id: string;
@@ -16,11 +17,16 @@ interface UserQuery {
   status: 'Pending' | 'Resolved' | 'Dismissed';
   response: string;
   createdAt: string;
+  isCritical?: boolean;
 }
 
 export const AdminQueriesPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const queryIdFromUrl = searchParams.get('id');
+
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCriticalOnly, setShowCriticalOnly] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState<UserQuery | null>(null);
   const [responseText, setResponseText] = useState('');
 
@@ -31,6 +37,16 @@ export const AdminQueriesPage: React.FC = () => {
       return data.data;
     }
   });
+
+  useEffect(() => {
+    if (queryIdFromUrl && queries.length > 0) {
+      const matched = queries.find(q => q._id === queryIdFromUrl);
+      if (matched) {
+        setSelectedQuery(matched);
+        setResponseText(matched.response || '');
+      }
+    }
+  }, [queryIdFromUrl, queries]);
 
   const resolveMutation = useMutation({
     mutationFn: async ({ id, response, status }: { id: string, response: string, status: string }) => {
@@ -47,10 +63,15 @@ export const AdminQueriesPage: React.FC = () => {
     }
   });
 
-  const filteredQueries = queries.filter(q => 
-    q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (q.user?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredQueries = queries.filter(q => {
+    const matchesSearch = q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (q.user?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (showCriticalOnly) {
+      return matchesSearch && q.isCritical;
+    }
+    return matchesSearch;
+  });
 
   const handleResolve = (status: 'Resolved' | 'Dismissed') => {
     if (!selectedQuery) return;
@@ -69,7 +90,7 @@ export const AdminQueriesPage: React.FC = () => {
       <div className="flex gap-6 h-[calc(100vh-12rem)]">
         {/* Queries List */}
         <div className="w-1/2 flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <input
@@ -79,6 +100,25 @@ export const AdminQueriesPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCriticalOnly(!showCriticalOnly)}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                  showCriticalOnly 
+                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800' 
+                    : 'bg-white text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                <ShieldAlert className={`h-3.5 w-3.5 ${showCriticalOnly ? 'animate-pulse text-red-500' : ''}`} />
+                Critical Only {showCriticalOnly && 'Active'}
+              </button>
+              <button
+                onClick={() => { setSearchTerm(''); setShowCriticalOnly(false); }}
+                className="py-1.5 px-3 rounded-lg text-xs font-semibold border bg-white text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-800 hover:bg-gray-50"
+              >
+                Reset
+              </button>
             </div>
           </div>
           
@@ -98,8 +138,13 @@ export const AdminQueriesPage: React.FC = () => {
                     }`}
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                      <div className="font-medium text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
                         {query.user?.fullName || 'Unknown User'}
+                        {query.isCritical && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center gap-0.5 animate-pulse">
+                            <ShieldAlert className="h-3 w-3 text-red-500" /> CRITICAL
+                          </span>
+                        )}
                         {query.status === 'Pending' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>}
                         {query.status === 'Resolved' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Resolved</span>}
                         {query.status === 'Dismissed' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Dismissed</span>}

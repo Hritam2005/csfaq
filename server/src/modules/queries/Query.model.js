@@ -25,9 +25,27 @@ const QuerySchema = new mongoose.Schema(
     resolvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    },
+    isCritical: {
+      type: Boolean,
+      default: false,
     }
   },
   { timestamps: true }
 );
 
+QuerySchema.pre('save', function (next) {
+  if (this.isModified('question')) {
+    const criticalKeywords = [
+      'fail', 'broken', 'error', 'crash', 'down', 'payment', 
+      'leak', 'hacked', 'security', 'urgent', 'emergency', 
+      'blocker', 'login', 'unable'
+    ];
+    const questionLower = this.question.toLowerCase();
+    this.isCritical = criticalKeywords.some(keyword => questionLower.includes(keyword));
+  }
+  next();
+});
+
 export default mongoose.model('Query', QuerySchema);
+

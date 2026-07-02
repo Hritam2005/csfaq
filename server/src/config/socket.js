@@ -25,7 +25,7 @@ export const initSocketServer = (server) => {
         return next(new Error('Authentication Error: Missing Token'));
       }
 
-      const decoded = jwt.verify(token, env.jwtSecret);
+      const decoded = jwt.verify(token, env.jwt?.secret || env.jwtSecret || process.env.JWT_SECRET);
       const user = await User.findById(decoded.id).select('-password');
       
       if (!user) {

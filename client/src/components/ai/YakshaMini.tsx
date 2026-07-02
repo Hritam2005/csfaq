@@ -14,7 +14,7 @@ export const YakshaMini: React.FC = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [input, setInput] = useState('');
   
-  const { messages, isStreaming, streamingContent, sendMessage } = useChat();
+  const { messages, isStreaming, streamingContent, suggestions, sendMessage } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +37,12 @@ export const YakshaMini: React.FC = () => {
     if (input.trim() && !isStreaming) {
       sendMessage(input);
       setInput('');
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    if (!isStreaming) {
+      sendMessage(suggestion);
     }
   };
 
@@ -144,6 +150,20 @@ export const YakshaMini: React.FC = () => {
 
             {/* Input Area */}
             <div className="border-t border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+              {suggestions.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs text-primary-700 hover:bg-primary-100"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
               <form onSubmit={handleSend} className="flex gap-2">
                 <input
                   type="text"

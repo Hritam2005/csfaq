@@ -43,6 +43,7 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
 
 import User from '../../models/User.js';
 import Role from '../../models/Role.js';
+import Query from '../queries/Query.model.js';
 
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select('-password').populate('role', 'name');
@@ -59,9 +60,35 @@ export const getStats = asyncHandler(async (req, res) => {
   const activeUsers = await User.countDocuments({ accountStatus: 'active' });
   const totalRoles = await Role.countDocuments();
   
+  const totalQueries = await Query.countDocuments();
+  const pendingQueries = await Query.countDocuments({ status: 'Pending' });
+  const resolvedQueries = await Query.countDocuments({ status: 'Resolved' });
+  const dismissedQueries = await Query.countDocuments({ status: 'Dismissed' });
+  const criticalQueries = await Query.countDocuments({ isCritical: true });
+  const pendingCriticalQueries = await Query.countDocuments({ isCritical: true, status: 'Pending' });
+  
+  const criticalQueriesList = await Query.find({ isCritical: true })
+    .populate('user', 'fullName email')
+    .sort({ createdAt: -1 });
+
+  // Custom sort: Pending first, then Resolved, then Dismissed
+  const statusOrder = { 'Pending': 1, 'Resolved': 2, 'Dismissed': 3 };
+  const topCriticalQueries = criticalQueriesList
+    .sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99))
+    .slice(0, 5);
+
   res.status(200).json(ApiResponse.success({
     totalUsers,
     activeUsers,
-    totalRoles
+    totalRoles,
+    queryStats: {
+      total: totalQueries,
+      pending: pendingQueries,
+      resolved: resolvedQueries,
+      dismissed: dismissedQueries,
+      critical: criticalQueries,
+      pendingCritical: pendingCriticalQueries
+    },
+    mostCriticalQueries: topCriticalQueries
   }, 'Dashboard stats retrieved'));
 });

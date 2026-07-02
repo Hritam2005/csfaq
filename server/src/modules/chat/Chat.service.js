@@ -20,7 +20,7 @@ export class ChatService {
       conversationId: aiResult.conversationId,
       response: aiResult.response,
       citations: aiResult.citations,
-      suggestions,
+      suggestions: aiResult.suggestions?.length ? aiResult.suggestions : suggestions,
     };
   }
 

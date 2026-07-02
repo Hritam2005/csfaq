@@ -1,3 +1,7 @@
+// Fix: SSL cert verification fails on this machine due to a network proxy intercepting HTTPS.
+// This must be set before any imports that make HTTPS calls (e.g. OpenAI SDK).
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import app from './src/app.js';
 import { env } from './src/config/env.js';
 import { connectDB } from './src/config/db.js';

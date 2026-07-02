@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { ENV } from '../../config/env';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import toast from 'react-hot-toast';
@@ -40,11 +39,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     // Connect Main Socket
-    const newSocket = io(ENV.API_URL || 'http://localhost:5000', {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const newSocket = io(socketUrl, {
       auth: { token },
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {
@@ -59,6 +60,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
+      toast.error('Chat connection failed. Please refresh and sign in again.');
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Socket connected with auth token');
     });
 
     setSocket(newSocket);
@@ -66,9 +72,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Connect Admin Namespace if user is Admin
     // In a real app we'd check exactly, but here we just connect if they are admin role
     if (user?.role === 'Super Admin' || user?.role === 'Admin') {
-      const newAdminSocket = io(`${ENV.API_URL || 'http://localhost:5000'}/admin`, {
+      const newAdminSocket = io(`${socketUrl}/admin`, {
         auth: { token },
         reconnection: true,
+        transports: ['websocket', 'polling'],
       });
       
       newAdminSocket.on('system_alert', (payload) => {

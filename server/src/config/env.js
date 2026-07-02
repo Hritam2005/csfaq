@@ -21,6 +21,7 @@ const envVarsSchema = Joi.object()
     LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly').default('info'),
     UPLOAD_LIMIT: Joi.string().default('50mb'),
     OPENAI_API_KEY: Joi.string().optional().allow(''),
+    GROQ_API_KEY: Joi.string().optional().allow(''),
     REDIS_URL: Joi.string().optional().allow(''),
     SMTP_HOST: Joi.string().optional().allow(''),
     SMTP_PORT: Joi.number().optional(),
@@ -40,6 +41,7 @@ export const env = {
   nodeEnv: envVars.NODE_ENV,
   port: envVars.PORT,
   mongoUri: envVars.MONGO_URI,
+  OPENAI_API_KEY: envVars.OPENAI_API_KEY,
   jwt: {
     secret: envVars.JWT_SECRET,
     refreshSecret: envVars.JWT_REFRESH_SECRET,
@@ -48,6 +50,7 @@ export const env = {
   logLevel: envVars.LOG_LEVEL,
   uploadLimit: envVars.UPLOAD_LIMIT,
   openaiApiKey: envVars.OPENAI_API_KEY,
+  groqApiKey: envVars.GROQ_API_KEY,
   redisUrl: envVars.REDIS_URL,
   smtp: {
     host: envVars.SMTP_HOST,

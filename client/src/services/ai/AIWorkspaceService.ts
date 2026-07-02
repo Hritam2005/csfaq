@@ -43,6 +43,11 @@ export class AIWorkspaceService {
     return res.data;
   }
 
+  static async sendMessage(message: string, conversationId?: string) {
+    const res = await apiClient.post('/ai/chat', { prompt: message, conversationId });
+    return res.data?.data || res.data;
+  }
+
   static async clearHistory() {
     const res = await apiClient.delete('/ai/conversations');
     return res.data;
