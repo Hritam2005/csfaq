@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  query-triage:
+    build: .
+    container_name: query-triage
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/query_triage}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - CAPACITY_WARNING_THRESHOLD=0.70
+      - CAPACITY_CRITICAL_THRESHOLD=0.90
+      - MAX_ACTIVE_CASES_PER_RESOLVER=10
+    depends_on:
+      - mongo
+    networks:
+      - query-triage-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/api/v1/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mongo:
+    image: mongo:7
+    container_name: query-triage-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - query-triage-mongo-data:/data/db
+    networks:
+      - query-triage-network
+
+volumes:
+  query-triage-mongo-data:
+
+networks:
+  query-triage-network:
+    driver: bridge
