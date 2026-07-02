@@ -88,7 +88,7 @@ export const Navbar: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     </div>
-                    {user?.role === 'Admin' || user?.role === 'Super Admin' ? (
+                    {user?.role?.toLowerCase().includes('admin') ? (
                       <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Admin Dashboard</Link>
                     ) : (
                       <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>User Dashboard</Link>

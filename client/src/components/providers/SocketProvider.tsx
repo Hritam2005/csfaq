@@ -65,7 +65,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Connect Admin Namespace if user is Admin
     // In a real app we'd check exactly, but here we just connect if they are admin role
-    if (user?.role === 'Super Admin' || user?.role === 'Admin') {
+    if (user?.role?.toLowerCase().includes('admin')) {
       const newAdminSocket = io(`${ENV.API_URL || 'http://localhost:5000'}/admin`, {
         auth: { token },
         reconnection: true,

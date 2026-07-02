@@ -52,12 +52,22 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { email, password, deviceId, deviceName, browser, os } = req.body;
+  const { email, password, deviceId, deviceName, browser, os, loginType } = req.body;
   const ipAddress = req.ip;
 
   const deviceInfo = { deviceId, deviceName, browser, os };
   
   const { user, tokens } = await AuthService.login(email, password, deviceInfo, ipAddress);
+
+  const roleName = user.role?.name?.toLowerCase() || '';
+  const isAdmin = roleName.includes('admin');
+  
+  if (loginType === 'admin' && !isAdmin) {
+    throw ApiError.forbidden('Access denied. Admin credentials required.');
+  }
+  if (loginType === 'user' && isAdmin) {
+    throw ApiError.forbidden('Please use the Admin Sign In portal.');
+  }
 
   // Set cookies
   res.cookie('accessToken', tokens.accessToken, cookieOptions);
@@ -77,12 +87,22 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const googleLogin = asyncHandler(async (req, res) => {
-  const { email, name, deviceId, deviceName, browser, os } = req.body;
+  const { email, name, deviceId, deviceName, browser, os, loginType } = req.body;
   const ipAddress = req.ip;
 
   const deviceInfo = { deviceId, deviceName, browser, os };
   
   const { user, tokens } = await AuthService.googleLogin(email, name, deviceInfo, ipAddress);
+
+  const roleName = user.role?.name?.toLowerCase() || '';
+  const isAdmin = roleName.includes('admin');
+  
+  if (loginType === 'admin' && !isAdmin) {
+    throw ApiError.forbidden('Access denied. Admin credentials required.');
+  }
+  if (loginType === 'user' && isAdmin) {
+    throw ApiError.forbidden('Please use the Admin Sign In portal.');
+  }
 
   res.cookie('accessToken', tokens.accessToken, cookieOptions);
   res.cookie('refreshToken', tokens.refreshToken, refreshCookieOptions);
