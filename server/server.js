@@ -26,6 +26,10 @@ const startServer = async () => {
     // Connect to Database
     await connectDB();
 
+    // Auto-seed admin user if it doesn't exist
+    const { seedAdmin } = await import('./src/utils/seedAdmin.js');
+    await seedAdmin();
+
     // Initialize Background Jobs
     initializeDocumentJobs();
     initializeDocumentCronJobs();
