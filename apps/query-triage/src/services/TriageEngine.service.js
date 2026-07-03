@@ -259,7 +259,9 @@ export class TriageEngine {
   /**
    * Classify query for risk and intent detection
    */
-  static classifyQuery(queryText, classification) {
+  static classifyQuery(queryText, classification = {}) {
+    if (!classification.riskTags) classification.riskTags = [];
+    if (!classification.categories) classification.categories = [];
     const lowerText = queryText.toLowerCase();
     
     // Detect risk tags

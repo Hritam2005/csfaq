@@ -1,26 +1,36 @@
 import Joi from 'joi';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load env variables
-const envPath = process.env.NODE_ENV === 'test' ? '../../.env.test' : '../../.env';
-dotenv.config({ path: path.join(__dirname, envPath) });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+if (process.env.NODE_ENV === 'test') {
+  const testEnvPath = path.join(__dirname, '../../.env.test');
+  if (fs.existsSync(testEnvPath)) {
+    dotenv.config({ path: testEnvPath, override: true });
+  }
+}
+
+const isTest = process.env.NODE_ENV === 'test';
 
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(5001),
-    MONGO_URI: Joi.string().required().description('MongoDB Connection String'),
-    JWT_SECRET: Joi.string().required().description('JWT Secret Key'),
-    JWT_REFRESH_SECRET: Joi.string().required().description('JWT Refresh Secret Key'),
-    CLIENT_URL: Joi.string().required().description('Frontend Client URL'),
+    MONGO_URI: isTest ? Joi.string().default('mongodb://localhost:27017/query_triage_test') : Joi.string().required().description('MongoDB Connection String'),
+    JWT_SECRET: isTest ? Joi.string().default('test_jwt_secret') : Joi.string().required().description('JWT Secret Key'),
+    JWT_REFRESH_SECRET: isTest ? Joi.string().default('test_refresh_secret') : Joi.string().required().description('JWT Refresh Secret Key'),
+    CLIENT_URL: isTest ? Joi.string().default('http://localhost:3000') : Joi.string().required().description('Frontend Client URL'),
     LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly').default('info'),
     UPLOAD_LIMIT: Joi.string().default('50mb'),
     OPENAI_API_KEY: Joi.string().optional().allow(''),
+    OPENAI_BASE_URL: Joi.string().default('http://127.0.0.1:8080/v1'),
+    OPENAI_MODEL: Joi.string().default('qwen2.5-coder-1.5b'),
     
     // Capacity thresholds
     CAPACITY_WARNING_THRESHOLD: Joi.number().default(0.70),
@@ -66,6 +76,11 @@ export const env = {
   logLevel: envVars.LOG_LEVEL,
   uploadLimit: envVars.UPLOAD_LIMIT,
   openaiApiKey: envVars.OPENAI_API_KEY,
+  openai: {
+    apiKey: envVars.OPENAI_API_KEY || 'sk-local-no-key-required',
+    baseUrl: envVars.OPENAI_BASE_URL,
+    model: envVars.OPENAI_MODEL,
+  },
   
   // Capacity Management
   capacity: {

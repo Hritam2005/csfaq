@@ -56,4 +56,5 @@ queryAuditEventSchema.index({ eventType: 1, createdAt: -1 });
 
 const QueryAuditEvent = mongoose.model('QueryAuditEvent', queryAuditEventSchema);
 
+export { ActorType };
 export default QueryAuditEvent;

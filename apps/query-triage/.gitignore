@@ -30,3 +30,7 @@ Thumbs.db
 
 # Uploads
 uploads/
+
+
+postman_collection.json
+postman_test_data.json

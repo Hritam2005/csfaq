@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import mongoose from 'mongoose';
 
 // Mock mongoose before importing the model

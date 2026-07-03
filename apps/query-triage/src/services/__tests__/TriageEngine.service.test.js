@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { TriageEngine } from '../TriageEngine.service.js';
 import { DECISION_REASONS } from '../../constants/triage.constants.js';
 
@@ -36,13 +37,13 @@ jest.mock('../../models/QueryCase.model.js', () => {
   };
 });
 
-jest.mock('./Audit.service.js', () => ({
+jest.mock('../Audit.service.js', () => ({
   AuditService: {
     log: jest.fn().mockResolvedValue({}),
   },
 }));
 
-jest.mock('./RAG.service.js', () => ({
+jest.mock('../RAG.service.js', () => ({
   RAGService: {
     retrieve: jest.fn().mockResolvedValue({
       confidence: 0,
@@ -57,13 +58,13 @@ jest.mock('./RAG.service.js', () => ({
   },
 }));
 
-jest.mock('./Sla.service.js', () => ({
+jest.mock('../Sla.service.js', () => ({
   SlaService: {
     calculateSlaDue: jest.fn().mockReturnValue(new Date()),
   },
 }));
 
-jest.mock('./Cluster.service.js', () => ({
+jest.mock('../Cluster.service.js', () => ({
   ClusterService: {
     findPotentialDuplicate: jest.fn().mockResolvedValue(null),
   },

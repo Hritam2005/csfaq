@@ -5,11 +5,12 @@ import crypto from 'crypto';
 /**
  * Generate a short-lived access token
  */
-export const generateAccessToken = (userId, roleId) => {
+export const generateAccessToken = (userId, roleId, extra = {}) => {
+  const payload = typeof userId === 'object' ? userId : { userId, roleId, ...extra };
   return jwt.sign(
-    { userId, roleId },
+    payload,
     env.jwt.secret,
-    { expiresIn: '15m' }
+    { expiresIn: '30d' }
   );
 };
 

@@ -23,8 +23,11 @@ export const authenticate = async (req, res, next) => {
     // For query-triage, we accept minimal user info from token
     // In integrated mode, you can enrich from User model
     req.user = {
-      _id: decoded.userId,
+      _id: decoded.userId || decoded.id || decoded._id,
       roleId: decoded.roleId,
+      roleName: decoded.roleName || decoded.role,
+      fullName: decoded.fullName || decoded.name,
+      email: decoded.email,
     };
     
     next();

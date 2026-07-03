@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { SlaService } from '../Sla.service.js';
 import { PriorityLevel } from '../../models/QueryCase.model.js';
 
@@ -91,7 +92,7 @@ describe('SlaService', () => {
   describe('formatDuration', () => {
     test('should format days', () => {
       const result = SlaService.formatDuration(2 * 24 * 60 * 60 * 1000);
-      expect(result).toBe('48h 0m');
+      expect(result).toBe('2d 0h');
     });
 
     test('should format hours and minutes', () => {

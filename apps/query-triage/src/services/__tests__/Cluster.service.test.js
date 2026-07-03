@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { ClusterService } from '../Cluster.service.js';
 
 // Mock env
