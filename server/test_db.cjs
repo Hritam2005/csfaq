@@ -1,3 +1,5 @@
+const dns = require('node:dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const { MongoClient } = require('mongodb');
 
 const uri = "mongodb+srv://cryptic5123:ft6ISPMuxLTjVDsp@csfaq.wspmgcv.mongodb.net/?appName=csfaq";

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, Bookmark, Download, Folder, GraduationCap, History, LayoutDashboard, Settings, Upload, Award } from 'lucide-react';
+import { Activity, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings, Award } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 
