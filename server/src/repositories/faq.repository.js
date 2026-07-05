@@ -21,16 +21,20 @@ class FAQRepository {
   }
 
   static async searchFaqs(query, filters = {}) {
-    // Initial Text Search via MongoDB Text Index
-    const searchFilter = query ? { $text: { $search: query } } : {};
-    const finalQuery = { ...searchFilter, ...filters };
-
-    return await FAQ.find(finalQuery, { score: { $meta: 'textScore' } })
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(20)
-      .populate('category', 'name')
-      .populate('tags', 'name');
+    const finalQuery = { ...filters };
+    if (query) {
+      finalQuery.$text = { $search: query };
+      return await FAQ.find(finalQuery, { score: { $meta: 'textScore' } })
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(100)
+        .populate('category', 'name slug color icon')
+        .populate('tags', 'name slug color');
+    }
+    return await FAQ.find(finalQuery)
+      .populate('category', 'name slug color icon')
+      .populate('tags', 'name slug color');
   }
+
 
   static async updateById(id, updateData) {
     return await FAQ.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
