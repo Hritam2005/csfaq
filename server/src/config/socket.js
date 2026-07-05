@@ -7,6 +7,7 @@ import User from '../models/User.js';
 let io;
 
 export const initSocketServer = (server) => {
+  console.log('Socket CORS Origin:', env.clientUrl);
   io = new Server(server, {
     cors: {
       origin: env.clientUrl || 'http://localhost:5173',
@@ -19,14 +20,18 @@ export const initSocketServer = (server) => {
   // Authentication Middleware for all connections
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+      let token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+      
+      if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7);
+      }
       
       if (!token) {
         return next(new Error('Authentication Error: Missing Token'));
       }
 
-      const decoded = jwt.verify(token, env.jwtSecret);
-      const user = await User.findById(decoded.id).select('-password');
+      const decoded = jwt.verify(token, env.jwt.secret);
+      const user = await User.findById(decoded.userId).select('-password');
       
       if (!user) {
         return next(new Error('Authentication Error: User Not Found'));

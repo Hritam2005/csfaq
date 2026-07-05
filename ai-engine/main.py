@@ -73,6 +73,8 @@ async def chat_stream(request: ChatRequest):
         
     if index is None:
         return {"error": "Knowledge base not initialized"}
+        
+    print(f"DEBUG: Processing request using model: {model.model_name}")
 
     # 1. Embed query
     query_embedding = embedder.encode([request.prompt]).astype("float32")
@@ -88,9 +90,9 @@ async def chat_stream(request: ChatRequest):
             
     context_str = "\n\n---\n\n".join(retrieved_context)
     
-    system_prompt = f"""You are a helpful AI assistant. 
+    system_prompt = f"""You are a helpful AI assistant named Yaksha. 
 You must answer the user's question STRICTLY based on the following context.
-If the answer cannot be found in the context, explicitly say: "I cannot answer this question based on the provided documents."
+If the answer cannot be found in the context, explicitly say: "Yaksha does not know the answer to that question, please ask relevant questions"
 Do not use outside knowledge.
 
 Context:
