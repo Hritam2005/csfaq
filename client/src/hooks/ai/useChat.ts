@@ -7,7 +7,7 @@ export function useChat(conversationId?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
 
   // Accumulator ref because state updates in socket listeners can be tricky
   const streamingContentRef = useRef('');
@@ -22,12 +22,13 @@ export function useChat(conversationId?: string) {
 
     const handleDone = (_data: { confidence: any, conversationId: string }) => {
       setIsStreaming(false);
+      const finalContent = streamingContentRef.current;
       setMessages(prev => [
         ...prev,
         { 
           _id: `bot-${Date.now()}`, 
           role: 'assistant', 
-          content: streamingContentRef.current, 
+          content: finalContent, 
           timestamp: new Date().toISOString() 
         }
       ]);
@@ -44,12 +45,13 @@ export function useChat(conversationId?: string) {
 
     const handleStopped = () => {
       setIsStreaming(false);
+      const finalContent = streamingContentRef.current;
       setMessages(prev => [
         ...prev,
         { 
           _id: `bot-${Date.now()}`, 
           role: 'assistant', 
-          content: streamingContentRef.current, 
+          content: finalContent, 
           timestamp: new Date().toISOString() 
         }
       ]);
@@ -72,7 +74,10 @@ export function useChat(conversationId?: string) {
   }, [socket]);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || !socket) return;
+    if (!content.trim() || !socket || !isConnected) {
+      toast.error('You are disconnected from the server. Please refresh or log in again.');
+      return;
+    }
 
     // Optimistic UI Append
     const tempId = `temp-${Date.now()}`;
@@ -90,8 +95,7 @@ export function useChat(conversationId?: string) {
       conversationId,
       filters: {}
     });
-
-  }, [conversationId, socket]);
+  }, [conversationId, socket, isConnected]);
 
   const stopGeneration = useCallback(() => {
     if (socket) {

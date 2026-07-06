@@ -9,7 +9,7 @@ export const generateAccessToken = (userId, roleId) => {
   return jwt.sign(
     { userId, roleId },
     env.jwt.secret,
-    { expiresIn: '15m' } // Short lived
+    { expiresIn: '7d' } // Extended for development
   );
 };
 
