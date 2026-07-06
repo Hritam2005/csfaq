@@ -1,21 +1,33 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, Shield, FileText, Database, 
-  Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown 
+import {
+  LayoutDashboard, Users, Shield, FileText, Database,
+  Bot, Search, BarChart3, Settings, Server,
+  History, ShieldCheck, Menu, X, LogOut, ChevronDown,
+  Inbox, PieChart, Activity
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
 import { logout } from '../../store/slices/authSlice';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 import { AuthService } from '../../services/AuthService';
+import { useQuery } from '@tanstack/react-query';
+import { TriageService } from '../../services/triage/TriageService';
 
 const sidebarNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
   { name: 'User Queries', href: '/admin/queries', icon: FileText },
+];
+
+const triageNavigation = [
+  { name: 'Triage Inbox', href: '/admin/triage/inbox', icon: Inbox, badgeKey: 'awaiting' },
+  { name: 'Team Capacity', href: '/admin/triage/capacity', icon: Activity, badgeKey: null },
+  { name: 'Workload', href: '/admin/triage/workload', icon: PieChart, badgeKey: null },
+];
+
+const systemNavigation = [
   { name: 'Documents / PDFs', href: '/admin/documents', icon: Database },
   { name: 'AI Models & Prompts', href: '/admin/ai', icon: Bot },
   { name: 'Search Settings', href: '/admin/search', icon: Search },
@@ -31,6 +43,58 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  // Live count of queries currently waiting for a human resolver.
+  // Drives the red badge on the "Triage Inbox" sidebar entry.
+  const { data: capacity } = useQuery({
+    queryKey: ['triage-capacity-badge'],
+    queryFn: TriageService.getCapacity,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+  });
+  const awaitingBadge = (capacity?.activeCases ?? 0) > 0 ? capacity!.activeCases : 0;
+
+  const renderNavItem = (item: { name: string; href: string; icon: any; badgeKey?: string | null }, badgeCount?: number) => {
+    const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
+    const showBadge = !!item.badgeKey && (badgeCount ?? 0) > 0;
+    return (
+      <Link
+        key={item.name}
+        to={item.href}
+        className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium ${
+          isActive
+            ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+        }`}
+      >
+        <span className="flex items-center">
+          <item.icon
+            className={`mr-3 h-5 w-5 flex-shrink-0 ${
+              isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
+            }`}
+            aria-hidden="true"
+          />
+          {item.name}
+        </span>
+        {showBadge && (
+          <span className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-600 text-white">
+            {badgeCount}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const renderSection = (title: string, items: any[], badgeFor?: (item: any) => number | undefined) => (
+    <div className="pt-4 first:pt-0">
+      <h3 className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        {title}
+      </h3>
+      <div className="space-y-1">
+        {items.map((item) => renderNavItem(item, badgeFor ? badgeFor(item) : undefined))}
+      </div>
+    </div>
+  );
 
   const handleLogout = async () => {
     try {
@@ -65,29 +129,14 @@ export const AdminLayout: React.FC = () => {
           </button>
         </div>
         <div className="flex h-full flex-col overflow-y-auto pt-5 pb-20">
-          <nav className="flex-1 space-y-1 px-3">
-            {sidebarNavigation.map((item) => {
-              const isActive = location.pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium ${
-                    isActive
-                      ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
-                  }`}
-                >
-                  <item.icon
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                      isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 px-3 pb-4 space-y-2">
+            {renderSection('Overview', sidebarNavigation)}
+            {renderSection(
+              'Triage & Support',
+              triageNavigation,
+              (item) => (item.badgeKey === 'awaiting' ? awaitingBadge : undefined)
+            )}
+            {renderSection('System', systemNavigation)}
           </nav>
         </div>
       </div>

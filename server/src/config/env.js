@@ -15,6 +15,13 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(5000),
     MONGO_URI: Joi.string().required().description('MongoDB Connection String'),
+    // Optional: cross-DB auth fallback for the query-triage microservice.
+    // When set, the main server will look up users in this database if they
+    // are not present in the main users collection. This lets the demo
+    // accounts (Diana, Evan, Alice, …) created by the triage seed script
+    // log in to the main frontend.
+    TRIAGE_MONGO_URI: Joi.string().optional().allow(''),
+    TRIAGE_DB_NAME: Joi.string().default('csfaq_triage'),
     JWT_SECRET: Joi.string().required().description('JWT Secret Key'),
     JWT_REFRESH_SECRET: Joi.string().required().description('JWT Refresh Secret Key'),
     CLIENT_URL: Joi.string().required().description('Frontend Client URL'),
@@ -40,6 +47,9 @@ export const env = {
   nodeEnv: envVars.NODE_ENV,
   port: envVars.PORT,
   mongoUri: envVars.MONGO_URI,
+  // Cross-database auth config for the query-triage microservice users.
+  triageMongoUri: envVars.TRIAGE_MONGO_URI || envVars.MONGO_URI,
+  triageDbName: envVars.TRIAGE_DB_NAME,
   jwt: {
     secret: envVars.JWT_SECRET,
     refreshSecret: envVars.JWT_REFRESH_SECRET,

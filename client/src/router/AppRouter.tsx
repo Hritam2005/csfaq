@@ -50,6 +50,16 @@ import { AdminDocumentsPage } from '../pages/admin/documents/AdminDocumentsPage'
 import { AdminQueriesPage } from '../pages/admin/queries/AdminQueriesPage';
 import { SupportPage } from '../pages/public/SupportPage';
 
+// Query-Triage microservice pages
+import { MyQueriesPage } from '../pages/triage/user/MyQueriesPage';
+import { NewQueryPage } from '../pages/triage/user/NewQueryPage';
+import { QueryDetailPage } from '../pages/triage/user/QueryDetailPage';
+import { TriageInboxPage } from '../pages/triage/admin/TriageInboxPage';
+import { AdminQueryDetailPage } from '../pages/triage/admin/AdminQueryDetailPage';
+import { TriageCapacityPage } from '../pages/triage/admin/TriageCapacityPage';
+import { TriageWorkloadPage } from '../pages/triage/admin/TriageWorkloadPage';
+import { IncidentDetailPage } from '../pages/triage/admin/IncidentDetailPage';
+
 export const appRouter = createBrowserRouter([
   {
     path: '/profile',
@@ -104,6 +114,9 @@ export const appRouter = createBrowserRouter([
       { index: true, element: <Navigate to="/app/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardOverviewPage /> },
       { path: 'activity', element: <ActivityPage /> },
+      // Query-Triage user routes
+      { path: 'queries', element: <Navigate to="/queries/my" replace /> },
+      { path: 'queries/new', element: <Navigate to="/queries/new" replace /> },
       // Other routes fallback to placeholders or same view for now
       { path: 'history', element: <ActivityPage /> },
       { path: 'bookmarks', element: <ActivityPage /> },
@@ -154,6 +167,46 @@ export const appRouter = createBrowserRouter([
   {
     path: '/dashboard',
     element: <Navigate to="/app/dashboard" replace />
+  },
+  // ---- Query-Triage user routes (also accessible while logged in) ---------
+  {
+    path: '/queries',
+    element: (
+      <ErrorBoundary>
+        <AuthGate>
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        </AuthGate>
+      </ErrorBoundary>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/queries/my" replace /> },
+      { path: 'my', element: <MyQueriesPage /> },
+      { path: 'new', element: <NewQueryPage /> },
+      { path: ':id', element: <QueryDetailPage /> },
+    ],
+  },
+  // ---- Query-Triage admin/resolver routes -------------------------------
+  {
+    path: '/admin/triage',
+    element: (
+      <ErrorBoundary>
+        <AuthGate>
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout />
+          </ProtectedRoute>
+        </AuthGate>
+      </ErrorBoundary>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/admin/triage/inbox" replace /> },
+      { path: 'inbox', element: <TriageInboxPage /> },
+      { path: 'inbox/:id', element: <AdminQueryDetailPage /> },
+      { path: 'incident/:id', element: <IncidentDetailPage /> },
+      { path: 'capacity', element: <TriageCapacityPage /> },
+      { path: 'workload', element: <TriageWorkloadPage /> },
+    ],
   },
   {
     path: '/admin',
