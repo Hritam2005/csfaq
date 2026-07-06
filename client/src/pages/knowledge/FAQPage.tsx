@@ -188,7 +188,15 @@ export const FAQPage: React.FC = () => {
               type="text"
               placeholder="Search FAQ keywords (e.g. NOC, stipend, Rosetta, Spurti)..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                if (val && selectedCategory !== 'all') {
+                  setSelectedCategory('all');
+                  searchParams.delete('category');
+                  setSearchParams(searchParams);
+                }
+              }}
               className="block w-full rounded-2xl border border-gray-200 bg-white py-4 pl-12 pr-4 text-base placeholder-gray-400 outline-none transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
             />
           </motion.div>

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import FAQ from '../models/FAQ.js';
 
 class FAQRepository {
@@ -23,14 +24,62 @@ class FAQRepository {
   static async searchFaqs(query, filters = {}) {
     const finalQuery = { ...filters };
     if (query) {
-      finalQuery.$text = { $search: query };
-      return await FAQ.find(finalQuery, { score: { $meta: 'textScore' } })
-        .sort({ score: { $meta: 'textScore' } })
-        .limit(100)
-        .populate('category', 'name slug color icon')
-        .populate('tags', 'name slug color');
+      const tokens = query.split(/\s+/).filter(Boolean);
+      if (tokens.length > 0) {
+        const regexes = tokens.map(t => new RegExp(t.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'));
+        
+        // Find matching tag IDs
+        let tagIds = [];
+        try {
+          const Tag = mongoose.model('Tag');
+          const matchedTags = await Tag.find({
+            $or: regexes.map(regex => ({
+              $or: [{ name: regex }, { synonyms: regex }, { aliases: regex }]
+            }))
+          }).select('_id');
+          tagIds = matchedTags.map(t => t._id);
+        } catch (e) {
+          console.error("Error finding matching tags:", e);
+        }
+
+        // Find matching category IDs
+        let categoryIds = [];
+        try {
+          const Category = mongoose.model('Category');
+          const matchedCategories = await Category.find({
+            $or: regexes.map(regex => ({
+              $or: [{ name: regex }, { description: regex }]
+            }))
+          }).select('_id');
+          categoryIds = matchedCategories.map(c => c._id);
+        } catch (e) {
+          console.error("Error finding matching categories:", e);
+        }
+
+        // Search criteria: match by question/answer text OR linked category OR linked tag
+        finalQuery.$or = [
+          {
+            $and: regexes.map(regex => ({
+              $or: [
+                { question: regex },
+                { answer: regex },
+                { keywords: regex }
+              ]
+            }))
+          }
+        ];
+
+        if (categoryIds.length > 0) {
+          finalQuery.$or.push({ category: { $in: categoryIds } });
+        }
+        if (tagIds.length > 0) {
+          finalQuery.$or.push({ tags: { $in: tagIds } });
+        }
+      }
     }
     return await FAQ.find(finalQuery)
+      .sort({ helpfulCount: -1, popularityScore: -1 })
+      .limit(100)
       .populate('category', 'name slug color icon')
       .populate('tags', 'name slug color');
   }
