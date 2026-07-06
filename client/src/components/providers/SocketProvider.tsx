@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { ENV } from '../../config/env';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import toast from 'react-hot-toast';
