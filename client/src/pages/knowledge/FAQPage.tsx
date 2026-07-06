@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, ChevronDown, HelpCircle, ArrowUpRight, FolderOpen, RefreshCcw } from 'lucide-react';
+import { Search, ChevronDown, HelpCircle, ArrowUpRight, FolderOpen, RefreshCcw, Sliders, Sparkles, ThumbsUp, Flame, Award } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { FAQService } from '../../services/faqService';
+import { FAQService, FAQ } from '../../services/faqService';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const FAQPage: React.FC = () => {
@@ -13,6 +13,12 @@ export const FAQPage: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+
+  // New states for priority dropdown
+  const [isPriorityDropdownOpen, setIsPriorityDropdownOpen] = useState(false);
+  const [prioritySearchQuery, setPrioritySearchQuery] = useState('');
+  const [highlightedFaqId, setHighlightedFaqId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -42,6 +48,84 @@ export const FAQPage: React.FC = () => {
       category: selectedCategory !== 'all' ? selectedCategory : undefined
     })
   });
+
+  // Query all FAQs for the Priority Navigator dropdown
+  const { data: allFaqs } = useQuery({
+    queryKey: ['allFaqsForPriority'],
+    queryFn: () => FAQService.getFaqs()
+  });
+
+  // Handle click outside for priority dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsPriorityDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Bucket FAQs into Priority Levels
+  const priorityLevels = useMemo(() => {
+    if (!allFaqs || allFaqs.length === 0) {
+      return { level1: [], level2: [], level3: [] };
+    }
+    
+    // Sort by helpful votes descending
+    const sorted = [...allFaqs].sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0));
+    const total = sorted.length;
+    
+    // Percentile-based grouping
+    // Level 1: Top 30%
+    // Level 2: Middle 40%
+    // Level 3: Bottom 30%
+    const l1Count = Math.max(1, Math.floor(total * 0.3));
+    const l2Count = Math.max(1, Math.floor(total * 0.4));
+    
+    const level1 = sorted.slice(0, l1Count);
+    const level2 = sorted.slice(l1Count, l1Count + l2Count);
+    const level3 = sorted.slice(l1Count + l2Count);
+    
+    return { level1, level2, level3 };
+  }, [allFaqs]);
+
+  const filterPriorityFaqs = (list: FAQ[]) => {
+    if (!prioritySearchQuery) return list;
+    return list.filter(faq =>
+      faq.question.toLowerCase().includes(prioritySearchQuery.toLowerCase()) ||
+      (faq.answer && faq.answer.toLowerCase().includes(prioritySearchQuery.toLowerCase()))
+    );
+  };
+
+  const handleSelectPriorityFaq = (faq: FAQ) => {
+    // Reset filters to show navigated card
+    setSelectedCategory('all');
+    setSearchQuery('');
+    setDebouncedSearch('');
+    
+    searchParams.delete('category');
+    setSearchParams(searchParams);
+    
+    setExpandedFaqId(faq._id);
+    setHighlightedFaqId(faq._id);
+    
+    setTimeout(() => {
+      setHighlightedFaqId(null);
+    }, 2500);
+
+    setTimeout(() => {
+      const element = document.getElementById(`faq-card-${faq._id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    
+    setIsPriorityDropdownOpen(false);
+    setPrioritySearchQuery('');
+  };
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -155,6 +239,147 @@ export const FAQPage: React.FC = () => {
 
           {/* Accordion / FAQ Area */}
           <main className="lg:col-span-3">
+            {/* Priority Quick Navigator Dropdown Panel */}
+            <div className="relative mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-gray-900/40 p-4 rounded-2xl border border-gray-250 dark:border-gray-800/80 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-primary-50 dark:bg-primary-950/30 text-primary-500 rounded-xl">
+                  <Sliders className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-1.5">
+                    Priority Quick Finder
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Jump directly to questions grouped by vote priority (Levels 1-3)</p>
+                </div>
+              </div>
+
+              {/* Dropdown Container */}
+              <div ref={dropdownRef} className="relative w-full sm:w-80">
+                <button
+                  onClick={() => setIsPriorityDropdownOpen(!isPriorityDropdownOpen)}
+                  className="flex w-full items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all focus:ring-2 focus:ring-primary-500/20"
+                >
+                  <span className="flex items-center gap-2">
+                    ⚡ Find by Priority
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isPriorityDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu Overlay */}
+                <AnimatePresence>
+                  {isPriorityDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-full sm:w-[450px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-50 overflow-hidden"
+                    >
+                      {/* Search / Filter input */}
+                      <div className="p-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search priority list..."
+                            value={prioritySearchQuery}
+                            onChange={(e) => setPrioritySearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-850 dark:text-white outline-none focus:border-primary-500 dark:focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Priority Groups */}
+                      <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+                        
+                        {/* Level 1: High Priority */}
+                        <div className="p-2">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider bg-red-50 dark:bg-red-950/20 rounded-lg">
+                            <Flame className="h-3.5 w-3.5" /> Level 1: High Priority (Top Voted)
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {filterPriorityFaqs(priorityLevels.level1).length === 0 ? (
+                              <div className="text-center py-2 text-xs text-gray-450">No matching questions</div>
+                            ) : (
+                              filterPriorityFaqs(priorityLevels.level1).map((faq) => (
+                                <button
+                                  key={faq._id}
+                                  onClick={() => handleSelectPriorityFaq(faq)}
+                                  className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors flex justify-between items-start gap-3 group"
+                                >
+                                  <span className="text-xs text-gray-750 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 font-medium line-clamp-2">
+                                    {faq.question}
+                                  </span>
+                                  <span className="flex-shrink-0 flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 bg-red-50/70 dark:bg-red-950/30 px-2 py-0.5 rounded-full font-bold">
+                                    <ThumbsUp className="h-2.5 w-2.5" /> {faq.helpfulCount || 0}
+                                  </span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Level 2: Medium Priority */}
+                        <div className="p-2">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                            <Sparkles className="h-3.5 w-3.5" /> Level 2: Medium Priority
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {filterPriorityFaqs(priorityLevels.level2).length === 0 ? (
+                              <div className="text-center py-2 text-xs text-gray-450">No matching questions</div>
+                            ) : (
+                              filterPriorityFaqs(priorityLevels.level2).map((faq) => (
+                                <button
+                                  key={faq._id}
+                                  onClick={() => handleSelectPriorityFaq(faq)}
+                                  className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors flex justify-between items-start gap-3 group"
+                                >
+                                  <span className="text-xs text-gray-750 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 font-medium line-clamp-2">
+                                    {faq.question}
+                                  </span>
+                                  <span className="flex-shrink-0 flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/30 px-2 py-0.5 rounded-full font-bold">
+                                    <ThumbsUp className="h-2.5 w-2.5" /> {faq.helpfulCount || 0}
+                                  </span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Level 3: Low Priority */}
+                        <div className="p-2">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                            <Award className="h-3.5 w-3.5" /> Level 3: Low Priority
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {filterPriorityFaqs(priorityLevels.level3).length === 0 ? (
+                              <div className="text-center py-2 text-xs text-gray-450">No matching questions</div>
+                            ) : (
+                              filterPriorityFaqs(priorityLevels.level3).map((faq) => (
+                                <button
+                                  key={faq._id}
+                                  onClick={() => handleSelectPriorityFaq(faq)}
+                                  className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors flex justify-between items-start gap-3 group"
+                                >
+                                  <span className="text-xs text-gray-755 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 font-medium line-clamp-2">
+                                    {faq.question}
+                                  </span>
+                                  <span className="flex-shrink-0 flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/30 px-2 py-0.5 rounded-full font-bold">
+                                    <ThumbsUp className="h-2.5 w-2.5" /> {faq.helpfulCount || 0}
+                                  </span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
             {isFaqsLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -178,14 +403,18 @@ export const FAQPage: React.FC = () => {
               <div className="space-y-4">
                 {faqs?.map((faq) => {
                   const isOpen = expandedFaqId === faq._id;
+                  const isHighlighted = highlightedFaqId === faq._id;
                   return (
                     <motion.div
                       layout
+                      id={`faq-card-${faq._id}`}
                       key={faq._id}
-                      className={`overflow-hidden rounded-2xl border transition-all ${
-                        isOpen
-                          ? 'border-primary-500/50 bg-white dark:bg-background shadow-md shadow-primary-500/5'
-                          : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900/40 dark:hover:border-gray-700'
+                      className={`overflow-hidden rounded-2xl border transition-all duration-500 ${
+                        isHighlighted
+                          ? 'ring-2 ring-primary-500 border-primary-500 shadow-xl bg-primary-50/10 dark:bg-primary-950/15 scale-[1.01]'
+                          : isOpen
+                            ? 'border-primary-500/50 bg-white dark:bg-background shadow-md shadow-primary-500/5'
+                            : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900/40 dark:hover:border-gray-700'
                       }`}
                     >
                       <button
