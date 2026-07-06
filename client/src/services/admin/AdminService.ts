@@ -24,5 +24,15 @@ export const adminApi = {
   getStats: async () => {
     const response = await apiClient.get('/admin/stats');
     return response.data;
+  },
+  
+  getRedemptions: async () => {
+    const response = await apiClient.get('/admin/redemptions');
+    return response.data;
+  },
+  
+  getAuditLogs: async (page = 1) => {
+    const response = await apiClient.get(`/admin/logs/audit?page=${page}`);
+    return response.data;
   }
 };

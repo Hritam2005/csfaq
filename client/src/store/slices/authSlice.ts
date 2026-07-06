@@ -7,6 +7,8 @@ interface User {
   email: string;
   role: string;
   permissions: string[];
+  spurtiPoints?: number;
+  spurtiPointsSyncedAt?: string;
   profile?: {
     title?: string;
     bio?: string;
@@ -48,9 +50,14 @@ const authSlice = createSlice({
     },
     setInitialized: (state) => {
       state.isInitializing = false;
+    },
+    updateUserPoints: (state, action: PayloadAction<number>) => {
+      if (state.user) {
+        state.user.spurtiPoints = action.payload;
+      }
     }
   },
 });
 
-export const { setCredentials, logout, setInitialized } = authSlice.actions;
+export const { setCredentials, logout, setInitialized, updateUserPoints } = authSlice.actions;
 export default authSlice.reducer;

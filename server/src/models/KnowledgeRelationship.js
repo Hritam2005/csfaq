@@ -6,7 +6,7 @@ const knowledgeRelationshipSchema = new mongoose.Schema(
     sourceModel: {
       type: String,
       required: true,
-      enum: ['FAQ', 'KnowledgeDocument', 'Category', 'Tag'],
+      enum: ['FAQ', 'Category', 'Tag'],
       index: true,
     },
     sourceId: {
@@ -17,7 +17,7 @@ const knowledgeRelationshipSchema = new mongoose.Schema(
     targetModel: {
       type: String,
       required: true,
-      enum: ['FAQ', 'KnowledgeDocument', 'Category', 'Tag'],
+      enum: ['FAQ', 'Category', 'Tag'],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
