@@ -1,3 +1,8 @@
+import dns from "node:dns";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+console.log("After override:", dns.getServers());
 import app from './src/app.js';
 import { env } from './src/config/env.js';
 import { connectDB } from './src/config/db.js';
@@ -20,6 +25,10 @@ const startServer = async () => {
     
     // Connect to Database
     await connectDB();
+
+    // Auto-seed admin user if it doesn't exist
+    const { seedAdmin } = await import('./src/utils/seedAdmin.js');
+    await seedAdmin();
 
     // Initialize Background Jobs
     initializeDocumentJobs();

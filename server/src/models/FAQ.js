@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 import { APPROVAL_STATUS, VISIBILITY, DIFFICULTY } from '../constants/knowledge.constants.js';
+import './Tag.js';
+import './Category.js';
+
 
 const faqSchema = new mongoose.Schema(
   {
