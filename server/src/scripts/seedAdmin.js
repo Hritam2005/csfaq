@@ -1,14 +1,20 @@
+import mongoose from 'mongoose';
 import { connectDB } from '../config/db.js';
 import User from '../models/User.js';
 import Role from '../models/Role.js';
-import mongoose from 'mongoose';
+
+const ADMIN_CREDENTIALS = {
+  fullName: 'System Administrator',
+  username: 'admin',
+  email: 'admin@example.com',
+  password: 'AdminPassword123!',
+};
 
 const seedAdmin = async () => {
   try {
-    console.log('🌱 Starting Admin Seeding Process...');
+    console.log('Starting admin seeding process...');
     await connectDB();
-    
-    // Check if Super Admin role exists
+
     let superAdminRole = await Role.findOne({ name: 'Super Admin' });
     if (!superAdminRole) {
       superAdminRole = await Role.create({
@@ -17,43 +23,39 @@ const seedAdmin = async () => {
         isSystem: true,
         isActive: true,
       });
-      console.log('✅ Super Admin role created');
+      console.log('Super Admin role created.');
     } else {
-      console.log('✅ Super Admin role already exists');
+      console.log('Super Admin role already exists.');
     }
 
-    // Check if admin user exists
-    const adminEmail = 'admin@example.com';
-    let adminUser = await User.findOne({ email: adminEmail });
-    if (!adminUser) {
-      adminUser = await User.create({
-        fullName: 'System Administrator',
-        username: 'admin',
-        email: adminEmail,
-        password: 'AdminPassword123!', // This will be automatically hashed by the pre-save hook in User model
+    let adminUser = await User.findOne({ email: ADMIN_CREDENTIALS.email });
+    if (adminUser) {
+      adminUser.fullName = ADMIN_CREDENTIALS.fullName;
+      adminUser.username = ADMIN_CREDENTIALS.username;
+      adminUser.password = ADMIN_CREDENTIALS.password;
+      adminUser.role = superAdminRole._id;
+      adminUser.accountStatus = 'active';
+      adminUser.emailVerified = true;
+      await adminUser.save();
+      console.log('Admin user updated successfully.');
+    } else {
+      await User.create({
+        ...ADMIN_CREDENTIALS,
         role: superAdminRole._id,
         accountStatus: 'active',
-        emailVerified: true
+        emailVerified: true,
       });
-      console.log(`✅ Admin user created successfully!`);
-      console.log(`   Email: ${adminEmail}`);
-      console.log(`   Password: AdminPassword123!`);
-    } else {
-      console.log('✅ Admin user already exists');
-      // Just to be sure, update role to Super Admin if it's not
-      if (adminUser.role.toString() !== superAdminRole._id.toString()) {
-         adminUser.role = superAdminRole._id;
-         await adminUser.save();
-         console.log('✅ Admin user role updated to Super Admin');
-      }
+      console.log('Admin user created successfully.');
     }
 
+    console.log(`Email: ${ADMIN_CREDENTIALS.email}`);
+    console.log(`Password: ${ADMIN_CREDENTIALS.password}`);
   } catch (error) {
-    console.error('❌ Error seeding admin:', error);
+    console.error('Error seeding admin:', error);
+    process.exitCode = 1;
   } finally {
     await mongoose.disconnect();
-    console.log('🔌 Database connection closed');
-    process.exit(0);
+    console.log('Database connection closed.');
   }
 };
 

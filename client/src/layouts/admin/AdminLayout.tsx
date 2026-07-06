@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Shield, FileText, Database, 
   Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown 
+  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift 
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -15,6 +15,7 @@ const sidebarNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
+  { name: 'Spurti Redemptions', href: '/admin/redemptions', icon: Gift },
   { name: 'User Queries', href: '/admin/queries', icon: FileText },
   { name: 'Documents / PDFs', href: '/admin/documents', icon: Database },
   { name: 'AI Models & Prompts', href: '/admin/ai', icon: Bot },

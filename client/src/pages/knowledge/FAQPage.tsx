@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Search, ChevronDown, HelpCircle, ArrowUpRight, FolderOpen, RefreshCcw, Sliders, Sparkles, ThumbsUp, Flame, Award } from 'lucide-react';
+import { Link, useParams, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { Search, ChevronDown, ChevronLeft, HelpCircle, ArrowUpRight, FolderOpen, RefreshCcw, Sliders, Sparkles, ThumbsUp, Flame, Award } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { FAQService, FAQ } from '../../services/faqService';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const FAQPage: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'all';
+  const { categoryName } = useParams<{ categoryName: string }>();
+  const decodedCategory = categoryName ? decodeURIComponent(categoryName) : undefined;
   
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const isDashboard = pathname.startsWith('/app');
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
 
   // New states for priority dropdown
@@ -28,17 +33,28 @@ export const FAQPage: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Sync category state with searchParams
-  useEffect(() => {
-    const cat = searchParams.get('category') || 'all';
-    setSelectedCategory(cat);
-  }, [searchParams]);
-
   // Query categories
   const { data: categories, isLoading: isCatsLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: FAQService.getCategories
   });
+
+  // Sync selectedCategory state with URL path categoryName or query searchParams
+  useEffect(() => {
+    if (decodedCategory && categories) {
+      const matchedCat = categories.find(
+        cat => cat.name.toLowerCase() === decodedCategory.toLowerCase()
+      );
+      if (matchedCat) {
+        setSelectedCategory(matchedCat._id);
+        return;
+      }
+    }
+    
+    // Fall back to query param ?category=
+    const catQuery = searchParams.get('category') || 'all';
+    setSelectedCategory(catQuery);
+  }, [decodedCategory, categories, searchParams]);
 
   // Query FAQs
   const { data: faqs, isLoading: isFaqsLoading, error, refetch } = useQuery({
@@ -128,14 +144,29 @@ export const FAQPage: React.FC = () => {
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
     setExpandedFaqId(null);
+    
     if (categoryId === 'all') {
-      searchParams.delete('category');
+      if (categoryName) {
+        navigate(isDashboard ? '/app/collections' : '/faqs');
+      } else {
+        searchParams.delete('category');
+        setSearchParams(searchParams);
+      }
     } else {
-      searchParams.set('category', categoryId);
+      const catObj = categories?.find(c => c._id === categoryId);
+      if (catObj) {
+        if (categoryName) {
+          navigate(isDashboard 
+            ? `/app/collections/${encodeURIComponent(catObj.name)}`
+            : `/categories/${encodeURIComponent(catObj.name)}`
+          );
+        } else {
+          searchParams.set('category', categoryId);
+          setSearchParams(searchParams);
+        }
+      }
     }
-    setSearchParams(searchParams);
   };
 
   const toggleFaqExpand = (id: string) => {
@@ -148,6 +179,15 @@ export const FAQPage: React.FC = () => {
       <section className="relative overflow-hidden bg-white dark:bg-background border-b border-gray-150 dark:border-gray-800 py-16">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:opacity-10" />
         <div className="container relative mx-auto px-4 max-w-4xl text-center">
+          {decodedCategory && (
+            <Link 
+              to={isDashboard ? '/app/collections' : '/categories'} 
+              className="mb-4 inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary-600 dark:text-gray-400"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" /> Back to Categories
+            </Link>
+          )}
+
           <motion.span 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -162,7 +202,7 @@ export const FAQPage: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-white mb-4"
           >
-            Frequently Asked Questions
+            {decodedCategory ? `${decodedCategory} FAQs` : 'Frequently Asked Questions'}
           </motion.h1>
           
           <motion.p 
@@ -171,9 +211,12 @@ export const FAQPage: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-8"
           >
-            Find quick answers to common queries about Vicharanashala internship, policies, timelines, NOCs, and more.
+            {decodedCategory 
+              ? `Browse frequently asked questions for ${decodedCategory}.`
+              : 'Find quick answers to common queries about Vicharanashala internship, policies, timelines, NOCs, and more.'
+            }
           </motion.p>
-
+          
           {/* Large search input */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}

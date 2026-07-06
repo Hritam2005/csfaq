@@ -10,6 +10,8 @@ import chatRoutes from '../modules/chat/Chat.routes.js';
 import analyticsRoutes from '../modules/analytics/Analytics.routes.js';
 import adminRoutes from '../modules/admin/Admin.routes.js';
 import queryRoutes from '../modules/queries/Query.routes.js';
+import samagamaRoutes from '../modules/samagama/Samagama.routes.js';
+import dashboardRoutes from '../modules/dashboard/Dashboard.routes.js';
 
 const router = Router();
 
@@ -25,6 +27,8 @@ router.use('/chat', chatRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/queries', queryRoutes);
+router.use('/samagama', samagamaRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;
 

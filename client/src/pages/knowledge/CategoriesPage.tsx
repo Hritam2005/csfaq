@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Folder, Info, Calendar, FileText, Mail, Briefcase, MessageSquare, Users, Award, BookOpen, Video, Zap, MessageCircle, Play } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { FAQService } from '../../services/faqService';
@@ -22,6 +22,10 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 };
 
 export const CategoriesPage: React.FC = () => {
+  const { pathname } = useLocation();
+  const isDashboard = pathname.startsWith('/app');
+  const linkPrefix = isDashboard ? '/app/collections' : '/categories';
+
   const { data: categories, isLoading, error } = useQuery({
     queryKey: ['categories'],
     queryFn: FAQService.getCategories
@@ -51,7 +55,7 @@ export const CategoriesPage: React.FC = () => {
             return (
               <Link
                 key={cat._id}
-                to={`/faqs?category=${cat._id}`}
+                to={`${linkPrefix}/${encodeURIComponent(cat.name)}`}
                 className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary-500 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
               >
                 <div>
@@ -79,4 +83,5 @@ export const CategoriesPage: React.FC = () => {
     </div>
   );
 };
+
 

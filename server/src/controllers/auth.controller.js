@@ -81,6 +81,8 @@ export const login = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     role: user.role?.name || 'Registered User',
+    spurtiPoints: user.spurtiPoints || 0,
+    spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };
 
   res.status(200).json(ApiResponse.success({ user: userData, token: tokens.accessToken }, 'Login successful'));
@@ -115,6 +117,8 @@ export const googleLogin = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     role: user.role ? user.role.name : 'Registered User',
+    spurtiPoints: user.spurtiPoints || 0,
+    spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };
 
   res.status(200).json(ApiResponse.success({ user: userData, token: tokens.accessToken }, 'Google Login successful'));
@@ -160,6 +164,8 @@ export const getProfile = asyncHandler(async (req, res) => {
     avatar: req.user.avatar,
     role: req.user.role?.name || 'Registered User',
     permissions: req.userPermissions,
+    spurtiPoints: req.user.spurtiPoints || 0,
+    spurtiPointsSyncedAt: req.user.spurtiPointsSyncedAt || null,
   };
   res.status(200).json(ApiResponse.success(userData, 'Profile retrieved'));
 });

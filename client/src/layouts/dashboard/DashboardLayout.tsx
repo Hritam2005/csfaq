@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings, Award } from 'lucide-react';
+import { Activity, Award, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 
@@ -11,7 +11,7 @@ export const DashboardLayout: React.FC = () => {
     { name: 'Reading History', to: '/app/history', icon: History },
     { name: 'Saved Answers', to: '/app/bookmarks', icon: Bookmark },
     { name: 'Collections', to: '/app/collections', icon: Folder },
-    { name: 'Achievements', to: '/app/achievements', icon: Award },
+    { name: 'Spurti Points', to: '/app/achievements', icon: Award },
     { name: 'Learning Progress', to: '/app/learning', icon: GraduationCap },
   ];
 
