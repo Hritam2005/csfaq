@@ -11,6 +11,7 @@ export const AdminDashboardPage: React.FC = () => {
   const { data: statsResponse } = useQuery({
     queryKey: ['adminStats'],
     queryFn: adminApi.getStats,
+    refetchInterval: 5000,
   });
 
   const stats = statsResponse?.data || {
@@ -18,9 +19,6 @@ export const AdminDashboardPage: React.FC = () => {
     activeUsers: 0,
     newUsersThisWeek: 0,
     totalRoles: 0,
-    totalDocuments: 0,
-    completedDocuments: 0,
-    failedDocuments: 0,
     totalFaqs: 0,
     publishedFaqs: 0,
     pendingFaqs: 0,
@@ -33,16 +31,14 @@ export const AdminDashboardPage: React.FC = () => {
     recentActivity: [],
   };
 
-  const documentCompletion = stats.totalDocuments
-    ? Math.round((stats.completedDocuments / stats.totalDocuments) * 100)
-    : 0;
+
   const queryResolution = stats.totalQueries
     ? Math.round((stats.resolvedQueries / stats.totalQueries) * 100)
     : 0;
   const activeUserRate = stats.totalUsers
     ? Math.round((stats.activeUsers / stats.totalUsers) * 100)
     : 0;
-  const isHealthy = stats.failedDocuments === 0 && stats.failedAuditEvents === 0;
+  const isHealthy = stats.failedAuditEvents === 0;
 
   return (
     <div className="space-y-6">
@@ -71,13 +67,7 @@ export const AdminDashboardPage: React.FC = () => {
           trend={`${stats.activeUsers} active`} 
           trendUp={true} 
         />
-        <StatCard 
-          title="Knowledge Documents" 
-          value={stats.totalDocuments.toLocaleString()} 
-          icon={<Database className="h-5 w-5 text-indigo-500" />} 
-          trend={`${stats.completedDocuments} processed`}
-          trendUp={stats.failedDocuments === 0}
-        />
+
         <StatCard 
           title="Pending Queries" 
           value={stats.pendingQueries.toLocaleString()} 
@@ -101,10 +91,7 @@ export const AdminDashboardPage: React.FC = () => {
             <AlertCircle className="h-4 w-4 text-amber-500" />
           </div>
           <div className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Failed documents</span>
-              <span className="font-semibold text-gray-900 dark:text-white">{stats.failedDocuments}</span>
-            </div>
+
             <div className="flex items-center justify-between">
               <span className="text-gray-600 dark:text-gray-400">FAQs pending review</span>
               <span className="font-semibold text-gray-900 dark:text-white">{stats.pendingFaqs}</span>
@@ -164,7 +151,7 @@ export const AdminDashboardPage: React.FC = () => {
               <option>This Year</option>
             </select>
           </div>
-          <UsageGraph />
+          <UsageGraph data={stats.usageData || []} />
         </div>
 
         {/* System Health / Quick Stats */}
@@ -172,15 +159,7 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">System Health</h3>
             <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">Document Completion</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{documentCompletion}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${documentCompletion}%` }}></div>
-                </div>
-              </div>
+
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600 dark:text-gray-400">Query Resolution</span>
@@ -212,18 +191,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       </div>
 
-      {/* Background Jobs Monitoring */}
-      <div className="mt-8 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900/50 overflow-hidden flex flex-col h-[600px]">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Background Job Metrics (BullMQ)</h3>
-          <p className="text-sm text-gray-500">Live monitoring of system background queues.</p>
-        </div>
-        <iframe 
-          src="http://localhost:5000/admin/queues" 
-          title="BullBoard"
-          className="w-full flex-1 border-none bg-white"
-        />
-      </div>
+
     </div>
   );
 };

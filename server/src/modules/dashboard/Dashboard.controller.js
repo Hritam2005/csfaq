@@ -2,7 +2,6 @@ import asyncHandler from '../../utils/asyncHandler.js';
 import ApiResponse from '../../utils/ApiResponse.js';
 import { Conversation } from '../ai/AI.model.js';
 import { Bookmark } from '../chat/Chat.model.js';
-import KnowledgeDocument from '../../models/KnowledgeDocument.js';
 import AuditLog from '../../models/AuditLog.js';
 
 export const getMetrics = asyncHandler(async (req, res) => {
@@ -10,18 +9,17 @@ export const getMetrics = asyncHandler(async (req, res) => {
 
   const [
     activeConversations,
-    savedDocuments,
     bookmarkedAnswers,
     tokenAggregate
   ] = await Promise.all([
     Conversation.countDocuments({ user: userId, status: 'active' }),
-    KnowledgeDocument.countDocuments({ uploadedBy: userId, isDeleted: false }),
     Bookmark.countDocuments({ user: userId }),
     Conversation.aggregate([
       { $match: { user: userId } },
       { $group: { _id: null, total: { $sum: '$totalTokens' } } }
     ])
   ]);
+  const savedDocuments = 0;
 
   const totalTokens = tokenAggregate[0]?.total || 0;
 
@@ -36,10 +34,9 @@ export const getMetrics = asyncHandler(async (req, res) => {
 export const getActivity = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const [conversations, bookmarks, documents, auditLogs] = await Promise.all([
+  const [conversations, bookmarks, auditLogs] = await Promise.all([
     Conversation.find({ user: userId }).sort({ createdAt: -1 }).limit(20).lean(),
     Bookmark.find({ user: userId }).sort({ createdAt: -1 }).limit(20).lean(),
-    KnowledgeDocument.find({ uploadedBy: userId }).sort({ createdAt: -1 }).limit(20).lean(),
     AuditLog.find({ user: userId }).sort({ createdAt: -1 }).limit(20).lean()
   ]);
 
@@ -67,17 +64,7 @@ export const getActivity = asyncHandler(async (req, res) => {
     });
   });
 
-  // 3. Map documents
-  documents.forEach(d => {
-    feeds.push({
-      _id: d._id.toString(),
-      type: 'upload',
-      title: 'Document Uploaded',
-      description: `${d.title} (${d.mimeType || 'unknown mimetype'})`,
-      timestamp: d.createdAt ? d.createdAt.toISOString() : new Date().toISOString()
-    });
-  });
-
+  // 3. Map documents (removed)
   // 4. Map audit logs
   auditLogs.forEach(al => {
     let type = 'search';
@@ -109,15 +96,7 @@ export const getActivity = asyncHandler(async (req, res) => {
 });
 
 export const getRecommendations = asyncHandler(async (req, res) => {
-  // Grab 2 top completed Knowledge Documents for suggestions
-  const docs = await KnowledgeDocument.find({ status: 'completed' }).limit(3).lean();
-  const recommendations = docs.map((doc, idx) => ({
-    _id: doc._id.toString(),
-    type: 'document',
-    title: doc.title,
-    relevanceScore: 98 - idx * 4,
-    summary: doc.description || 'Highly rated knowledge asset relevant to your role.'
-  }));
+  const recommendations = [];
 
   // Fallback if no documents exist in DB
   if (recommendations.length === 0) {
@@ -136,11 +115,11 @@ export const getRecommendations = asyncHandler(async (req, res) => {
 export const getCollections = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const [docsCount, bookmarksCount, convsCount] = await Promise.all([
-    KnowledgeDocument.countDocuments({ uploadedBy: userId, isDeleted: false }),
+  const [bookmarksCount, convsCount] = await Promise.all([
     Bookmark.countDocuments({ user: userId }),
     Conversation.countDocuments({ user: userId })
   ]);
+  const docsCount = 0;
 
   res.status(200).json([
     { id: 'docs', name: 'My Uploads', count: docsCount },
@@ -150,9 +129,7 @@ export const getCollections = asyncHandler(async (req, res) => {
 });
 
 export const getUploads = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const docs = await KnowledgeDocument.find({ uploadedBy: userId, isDeleted: false }).sort({ createdAt: -1 }).limit(10).lean();
-  res.status(200).json(docs);
+  res.status(200).json([]);
 });
 
 export const getDownloads = asyncHandler(async (req, res) => {
