@@ -145,55 +145,55 @@ export class AIOrchestrator {
     const conversation = await ConversationManager.getConversation(conversationId, user._id);
     const history = ConversationManager.getRecentHistory(conversation, 4);
 
-    const retrievalStart = Date.now();
-    const retrievedDocs = await KnowledgeRetriever.retrieve(cleanPrompt, filters);
-    const retrievalLatency = Date.now() - retrievalStart;
+    socket.emit('chat_metadata', { conversationId: conversation._id, citations: [] });
 
-    const context = ContextBuilder.build(retrievedDocs);
-    const systemInstruction = SYSTEM_PROMPT.replace('{{CONTEXT}}', context.text);
-
-    const messages = [
-      { role: 'system', content: systemInstruction },
-      ...history,
-      { role: 'user', content: cleanPrompt }
-    ];
-
-    const citations = context.sources.map(source => {
-      if (source._type === 'chunk') return CitationBuilder.build(source, source.document);
-      return { citationId: source._id, source: 'FAQ', textSnippet: source.question };
-    });
-
-    socket.emit('chat_metadata', { conversationId: conversation._id, citations });
-
-    const provider = ProviderFactory.getProvider('openai');
     let fullContent = '';
+    try {
+      const response = await fetch('http://localhost:8000/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: cleanPrompt,
+          history: history
+        })
+      });
 
-    const stream = await provider.generateStream(messages);
-
-    for await (const chunk of stream) {
-      if (chunk.content) {
-        fullContent += chunk.content;
-        socket.emit('chat_chunk', { text: chunk.content });
+      if (!response.ok) {
+        throw new Error(`AI Engine returned status ${response.status}`);
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunkText = decoder.decode(value, { stream: true });
+        fullContent += chunkText;
+        socket.emit('chat_chunk', { text: chunkText });
+      }
+    } catch (error) {
+      console.error("AI Engine Proxy Error:", error);
+      socket.emit('chat_error', { error: 'Failed to proxy request to AI Engine.' });
+      return;
     }
 
-    const confidence = ConfidenceCalculator.calculate(context.sources, fullContent);
-    await ConversationManager.appendTurn(conversation, cleanPrompt, fullContent, citations);
+    await ConversationManager.appendTurn(conversation, cleanPrompt, fullContent, []);
 
     await AIAnalytics.logUsage({
       conversationId: conversation._id,
       userId: user._id,
-      provider: 'openai',
-      model: provider.defaultModel,
+      provider: 'ai-engine-python',
+      model: 'all-MiniLM-L6-v2 + Gemini',
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,
       latencyMs: Date.now() - startTime,
-      retrievalLatencyMs: retrievalLatency,
-      confidenceScore: confidence.score,
-      confidenceRating: confidence.rating,
+      retrievalLatencyMs: 0,
+      confidenceScore: 1.0,
+      confidenceRating: 'High',
     });
 
-    socket.emit('chat_done', { confidence, conversationId: conversation._id });
+    socket.emit('chat_done', { confidence: 1.0, conversationId: conversation._id });
   }
 }
