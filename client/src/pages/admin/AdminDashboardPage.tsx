@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Database, AlertCircle, Bot } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Database, FileQuestion, ShieldAlert, ToggleRight, Users } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { UsageGraph } from '../../components/dashboard/UsageGraph';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';
@@ -13,15 +13,36 @@ export const AdminDashboardPage: React.FC = () => {
     queryFn: adminApi.getStats,
   });
 
-  const stats = statsResponse?.data || { totalUsers: 0, activeUsers: 0, totalRoles: 0 };
+  const stats = statsResponse?.data || {
+    totalUsers: 0,
+    activeUsers: 0,
+    newUsersThisWeek: 0,
+    totalRoles: 0,
+    totalDocuments: 0,
+    completedDocuments: 0,
+    failedDocuments: 0,
+    totalFaqs: 0,
+    publishedFaqs: 0,
+    pendingFaqs: 0,
+    totalQueries: 0,
+    pendingQueries: 0,
+    resolvedQueries: 0,
+    failedAuditEvents: 0,
+    enabledFeatures: 0,
+    latestBackup: null,
+    recentActivity: [],
+  };
 
-  // Hardcoded placeholders for now since we are building UI
-  const mockSystemActivity: any[] = [
-    { _id: '1', title: 'System Backup Complete', description: 'Automated backup completed successfully', timestamp: '10 mins ago', type: 'download' as any },
-    { _id: '2', title: 'New User Registration', description: 'john.doe@enterprise.com registered', timestamp: '1 hour ago', type: 'bookmark' as any },
-    { _id: '3', title: 'LLM Latency Spike', description: 'OpenAI API latency exceeded 2000ms', timestamp: '3 hours ago', type: 'search' as any },
-    { _id: '4', title: 'Knowledge Sync', description: 'Synchronized 150 documents from SharePoint', timestamp: '5 hours ago', type: 'upload' as any },
-  ];
+  const documentCompletion = stats.totalDocuments
+    ? Math.round((stats.completedDocuments / stats.totalDocuments) * 100)
+    : 0;
+  const queryResolution = stats.totalQueries
+    ? Math.round((stats.resolvedQueries / stats.totalQueries) * 100)
+    : 0;
+  const activeUserRate = stats.totalUsers
+    ? Math.round((stats.activeUsers / stats.totalUsers) * 100)
+    : 0;
+  const isHealthy = stats.failedDocuments === 0 && stats.failedAuditEvents === 0;
 
   return (
     <div className="space-y-6">
@@ -31,12 +52,12 @@ export const AdminDashboardPage: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Enterprise system overview and live metrics.</p>
         </div>
         <div className="flex items-center gap-3 text-sm font-medium">
-          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+          <div className={`flex items-center gap-1.5 ${isHealthy ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isHealthy ? 'bg-green-400' : 'bg-amber-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isHealthy ? 'bg-green-500' : 'bg-amber-500'}`}></span>
             </span>
-            All Systems Operational
+            {isHealthy ? 'All Systems Operational' : 'Review Needed'}
           </div>
         </div>
       </div>
@@ -52,24 +73,82 @@ export const AdminDashboardPage: React.FC = () => {
         />
         <StatCard 
           title="Knowledge Documents" 
-          value="45,302" 
+          value={stats.totalDocuments.toLocaleString()} 
           icon={<Database className="h-5 w-5 text-indigo-500" />} 
-          trend="+5.4% this month"
-          trendUp={true}
+          trend={`${stats.completedDocuments} processed`}
+          trendUp={stats.failedDocuments === 0}
         />
         <StatCard 
-          title="Total Roles" 
-          value={stats.totalRoles.toLocaleString()} 
-          icon={<Bot className="h-5 w-5 text-purple-500" />} 
-          trend="System Roles"
+          title="Pending Queries" 
+          value={stats.pendingQueries.toLocaleString()} 
+          icon={<FileQuestion className="h-5 w-5 text-violet-500" />} 
+          trend={`${stats.resolvedQueries} resolved`}
+          trendUp={stats.pendingQueries === 0}
         />
         <StatCard 
-          title="System Errors" 
-          value="24" 
-          icon={<AlertCircle className="h-5 w-5 text-red-500" />} 
-          trend="-2% this week"
-          trendUp={true}
+          title="Security Events" 
+          value={stats.failedAuditEvents.toLocaleString()} 
+          icon={<ShieldAlert className="h-5 w-5 text-red-500" />} 
+          trend="last 7 days"
+          trendUp={stats.failedAuditEvents === 0}
         />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Needs Attention</h3>
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+          </div>
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Failed documents</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{stats.failedDocuments}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">FAQs pending review</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{stats.pendingFaqs}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">User questions waiting</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{stats.pendingQueries}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Knowledge Base</h3>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.publishedFaqs}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Published FAQs</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalRoles}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Access roles</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Controls</h3>
+            <ToggleRight className="h-4 w-4 text-blue-500" />
+          </div>
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Enabled features</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{stats.enabledFeatures}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Latest backup</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{stats.latestBackup?.status || 'None'}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid */}
@@ -95,29 +174,29 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">Database Load</span>
-                  <span className="font-medium text-gray-900 dark:text-white">42%</span>
+                  <span className="text-gray-600 dark:text-gray-400">Document Completion</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{documentCompletion}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '42%' }}></div>
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${documentCompletion}%` }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">Vector Storage</span>
-                  <span className="font-medium text-gray-900 dark:text-white">78%</span>
+                  <span className="text-gray-600 dark:text-gray-400">Query Resolution</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{queryResolution}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: '78%' }}></div>
+                  <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${queryResolution}%` }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">API Rate Limits</span>
-                  <span className="font-medium text-gray-900 dark:text-white">12%</span>
+                  <span className="text-gray-600 dark:text-gray-400">Active Users</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{activeUserRate}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '12%' }}></div>
+                  <div className="bg-cyan-500 h-2 rounded-full" style={{ width: `${activeUserRate}%` }}></div>
                 </div>
               </div>
             </div>
@@ -127,7 +206,7 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recent Activity</h3>
             </div>
-            <ActivityTimeline items={mockSystemActivity} />
+            <ActivityTimeline items={stats.recentActivity} />
           </div>
         </div>
 

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { MessageSquare, Database, Bookmark, Brain } from 'lucide-react';
+import { MessageSquare, Database, Brain, Gift } from 'lucide-react';
 import { useDashboardMetrics, useActivityFeed, useRecommendations } from '../../hooks/dashboard/useDashboard';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';
 import { RecommendationWidget } from '../../components/dashboard/RecommendationWidget';
 import { UsageGraph } from '../../components/dashboard/UsageGraph';
+import { DashboardService } from '../../services/dashboard/DashboardService';
 
 export const DashboardOverviewPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -14,6 +16,47 @@ export const DashboardOverviewPage: React.FC = () => {
   const { data: metrics } = useDashboardMetrics();
   const { data: activity } = useActivityFeed();
   const { data: recommendations } = useRecommendations();
+  const [redemptions, setRedemptions] = useState<any[]>([]);
+  const storageKey = `spurti-redemptions-${user?._id || user?.email || 'guest'}`;
+
+  useEffect(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      setRedemptions(local);
+    } catch (e) {}
+
+    if (user) {
+      DashboardService.getUserRedemptions()
+        .then((dbRedemptions) => {
+          const mapped = dbRedemptions.map((r: any) => ({
+            id: r._id,
+            title: r.title,
+            cost: r.cost,
+            code: r.code,
+            redeemedAt: r.redeemedAt || r.createdAt,
+            used: r.used
+          }));
+          setRedemptions(mapped);
+        })
+        .catch((err) => console.error('Failed to load redemptions on overview:', err));
+    }
+  }, [user, storageKey]);
+
+  const spentPoints = useMemo(() => {
+    return redemptions.reduce((total, r) => total + r.cost, 0);
+  }, [redemptions]);
+
+  const earnedPoints = useMemo(() => {
+    const conversationPoints = (metrics?.activeConversations || 0) * 15;
+    const bookmarkPoints = (metrics?.bookmarkedAnswers || 0) * 10;
+    const activityPoints = (activity?.length || 0) * 8;
+    return 250 + conversationPoints + bookmarkPoints + activityPoints;
+  }, [activity?.length, metrics?.activeConversations, metrics?.bookmarkedAnswers]);
+
+  const sourcePoints = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
+    ? user.spurtiPoints
+    : earnedPoints;
+  const spurtiPoints = Math.max(sourcePoints - spentPoints, 0);
 
   return (
     <div className="space-y-8">
@@ -49,11 +92,29 @@ export const DashboardOverviewPage: React.FC = () => {
           trendUp={true}
         />
         <StatCard 
-          title="Bookmarked Answers" 
-          value={metrics?.bookmarkedAnswers || 45} 
-          icon={<Bookmark className="h-5 w-5" />} 
+          title="Spurti Points" 
+          value={spurtiPoints.toLocaleString()} 
+          icon={<Gift className="h-5 w-5" />} 
+          trend="Samagama credits"
+          trendUp={true}
         />
       </div>
+
+      <Link
+        to="/app/achievements"
+        className="flex items-center justify-between gap-4 rounded-xl border border-primary-100 bg-primary-50 p-5 text-primary-900 shadow-sm transition-colors hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-100 dark:hover:bg-primary-900/30"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white text-primary-600 dark:bg-gray-900 dark:text-primary-400">
+            <Gift className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold">Use Spurti Points as Samagama currency</p>
+            <p className="text-sm text-primary-700 dark:text-primary-300">Convert points into coupons for mentor help, learning sessions, reviews, and participant perks.</p>
+          </div>
+        </div>
+        <span className="shrink-0 text-sm font-semibold">Open Wallet</span>
+      </Link>
 
       {/* Main Grid: Usage Graph & Activity Feed */}
       <div className="grid gap-8 lg:grid-cols-3">

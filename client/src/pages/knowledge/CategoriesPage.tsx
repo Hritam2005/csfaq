@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Folder } from 'lucide-react';
 
 const mockCategories = [
@@ -10,6 +10,10 @@ const mockCategories = [
 ];
 
 export const CategoriesPage: React.FC = () => {
+  const { pathname } = useLocation();
+  const isDashboard = pathname.startsWith('/app');
+  const linkPrefix = isDashboard ? '/app/collections' : '/categories';
+
   return (
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-5xl">
       <div className="mb-10">
@@ -21,7 +25,7 @@ export const CategoriesPage: React.FC = () => {
         {mockCategories.map((cat) => (
           <Link 
             key={cat._id}
-            to={`/categories/${cat._id}`}
+            to={`${linkPrefix}/${encodeURIComponent(cat.name)}`}
             className="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-primary-500 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
           >
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
@@ -35,3 +39,4 @@ export const CategoriesPage: React.FC = () => {
     </div>
   );
 };
+

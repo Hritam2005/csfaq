@@ -3,6 +3,7 @@ import JWTService from './jwt.service.js';
 import EmailService from './email.service.js';
 import ApiError from '../utils/ApiError.js';
 import VerificationToken from '../models/VerificationToken.js';
+import { SamagamaService } from '../modules/samagama/Samagama.service.js';
 import Device from '../models/Device.js';
 import Role from '../models/Role.js';
 import crypto from 'crypto';
@@ -70,6 +71,16 @@ class AuthService {
 
     // Success! Reset failed logins
     await UserRepository.resetFailedLogins(user._id);
+
+    // Try to sync Spurti points using raw credentials
+    try {
+      const syncResult = await SamagamaService.getSpurtiPoints(email, password);
+      user.spurtiPoints = syncResult.points;
+      user.spurtiPointsSyncedAt = syncResult.syncedAt;
+      await user.save();
+    } catch (err) {
+      console.warn(`Could not auto-sync Samagama points for user ${email}: ${err.message}`);
+    }
 
     // Register Device if new
     let device = await Device.findOne({ user: user._id, deviceId: deviceInfo.deviceId });

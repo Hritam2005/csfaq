@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Book, ChevronRight } from 'lucide-react';
+import { Link, useParams, useLocation } from 'react-router-dom';
+import { Book, ChevronRight, ChevronLeft } from 'lucide-react';
 // import { useQuery } from '@tanstack/react-query';
 // import { apiClient } from '../../services/axios'; // Simulated for now
 
@@ -11,22 +11,46 @@ const mockFaqs = [
 ];
 
 export const FAQPage: React.FC = () => {
-  // Real implementation:
-  // const { data, isLoading } = useQuery({ queryKey: ['faqs'], queryFn: () => apiClient.get('/knowledge/faqs').then(res => res.data.data) });
+  const { categoryName } = useParams<{ categoryName: string }>();
+  const { pathname } = useLocation();
+  
+  const decodedCategory = categoryName ? decodeURIComponent(categoryName) : undefined;
   
   const isLoading = false;
-  const faqs = mockFaqs;
+  // Filter FAQs if categoryName is provided
+  const faqs = decodedCategory
+    ? mockFaqs.filter(faq => faq.category.toLowerCase() === decodedCategory.toLowerCase())
+    : mockFaqs;
 
   return (
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-5xl">
+      {decodedCategory && (
+        <Link 
+          to={pathname.startsWith('/app') ? '/app/collections' : '/categories'} 
+          className="mb-6 inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary-600 dark:text-gray-400"
+        >
+          <ChevronLeft className="mr-1 h-4 w-4" /> Back to Categories
+        </Link>
+      )}
+
       <div className="mb-10">
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Knowledge Base</h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">Browse curated frequently asked questions.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+          {decodedCategory ? `${decodedCategory} FAQs` : 'Knowledge Base'}
+        </h1>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+          {decodedCategory ? `Browse frequently asked questions for ${decodedCategory}.` : 'Browse curated frequently asked questions.'}
+        </p>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
           {[1,2,3].map(i => <div key={i} className="h-16 w-full animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />)}
+        </div>
+      ) : faqs.length === 0 ? (
+        <div className="text-center py-12 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50">
+          <Book className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">No FAQs found</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">There are currently no questions categorized under {decodedCategory}.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -53,3 +77,4 @@ export const FAQPage: React.FC = () => {
     </div>
   );
 };
+
