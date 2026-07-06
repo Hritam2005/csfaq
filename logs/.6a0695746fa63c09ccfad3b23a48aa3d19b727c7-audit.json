@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "C:\\Users\\hrita\\OneDrive\\Documents\\Codes\\antigravity\\csfaq\\logs\\.6a0695746fa63c09ccfad3b23a48aa3d19b727c7-audit.json",
+    "files": [
+        {
+            "date": 1783355653941,
+            "name": "C:\\Users\\hrita\\OneDrive\\Documents\\Codes\\antigravity\\csfaq\\logs\\error-2026-07-06.log",
+            "hash": "2d8c187304157341e60fb0e03afa27277b393a5defd68ce376b6bfdf283ff895"
+        }
+    ],
+    "hashType": "sha256"
+}

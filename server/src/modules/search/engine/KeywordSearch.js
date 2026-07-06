@@ -1,5 +1,4 @@
 import FAQ from '../../../models/FAQ.js';
-import DocumentChunk from '../../../models/DocumentChunk.js';
 
 export class KeywordSearch {
   /**
@@ -13,31 +12,17 @@ export class KeywordSearch {
     // "hello world" -> "\"hello world\"" for exact phrase, but we want broad for now
     const mongoQueryString = parsedQuery.tokens.join(' ');
 
-    const [faqs, chunks] = await Promise.all([
-      FAQ.find(
+    const faqs = await FAQ.find(
         { $text: { $search: mongoQueryString }, isDeleted: false },
         { score: { $meta: 'textScore' } }
       )
       .sort({ score: { $meta: 'textScore' } })
       .limit(limit)
-      .lean(),
-
-      DocumentChunk.find(
-        { $text: { $search: mongoQueryString } },
-        { score: { $meta: 'textScore' } }
-      )
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(limit)
-      .populate('document', 'title status isDeleted')
-      .lean()
-    ]);
-
-    // Filter out chunks belonging to deleted documents
-    const validChunks = chunks.filter(c => c.document && !c.document.isDeleted);
+      .lean();
 
     return {
       faqs: faqs.map(f => ({ ...f, _type: 'faq', _score: f.score })),
-      chunks: validChunks.map(c => ({ ...c, _type: 'chunk', _score: c.score })),
+      chunks: [],
     };
   }
 }

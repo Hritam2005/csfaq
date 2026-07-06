@@ -7,8 +7,6 @@ import app from './src/app.js';
 import { env } from './src/config/env.js';
 import { connectDB } from './src/config/db.js';
 import { logger } from './src/config/logger.js';
-import { initializeDocumentJobs } from './src/modules/document-processing/Document.jobs.js';
-import { initializeDocumentCronJobs } from './src/modules/document-processing/Document.cron.js';
 import { initializeKnowledgeJobs } from './src/modules/knowledge-engine/Knowledge.jobs.js';
 import { initializeSystemJobs } from './src/jobs/SystemJobs.js';
 
@@ -31,8 +29,6 @@ const startServer = async () => {
     await seedAdmin();
 
     // Initialize Background Jobs
-    initializeDocumentJobs();
-    initializeDocumentCronJobs();
     initializeKnowledgeJobs();
     initializeSystemJobs();
 
