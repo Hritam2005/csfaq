@@ -37,7 +37,7 @@ export const NotificationBell: React.FC = () => {
 
   return (
     <div className="relative">
-      <Button variant="ghost" size="icon" onClick={handleReset}>
+      <Button variant="ghost" size="icon" onClick={handleReset} title="Notifications">
         <Bell className="h-5 w-5" />
       </Button>
       {unreadCount > 0 && (

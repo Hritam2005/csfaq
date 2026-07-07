@@ -68,7 +68,12 @@ export const Navbar: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleTheme} 
+            title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
             {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           
@@ -78,6 +83,7 @@ export const Navbar: React.FC = () => {
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              title={user?.name ? `Account: ${user.name}` : 'Account'}
               className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors overflow-hidden"
             >
               {user?.avatar ? (
@@ -105,6 +111,15 @@ export const Navbar: React.FC = () => {
                       <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>User Dashboard</Link>
                     )}
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Edit Profile</Link>
+                    <a 
+                      href="https://docs.google.com/document/d/1xVqTgKfqP-EWnPvowyw2ME9d-3b_VMbBqx9p8lDQXLc/edit?tab=t.0" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" 
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Rosetta Journal
+                    </a>
                     <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">Sign Out</button>
                   </>
                 ) : (
