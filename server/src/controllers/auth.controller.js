@@ -211,3 +211,16 @@ export const updatePassword = asyncHandler(async (req, res) => {
 
   res.status(200).json(ApiResponse.success(null, 'Password updated successfully'));
 });
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  await AuthService.forgotPassword(email);
+  res.status(200).json(ApiResponse.success(null, 'If an account exists, a recovery email has been sent.'));
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+  await AuthService.resetPassword(token, password);
+  res.status(200).json(ApiResponse.success(null, 'Password successfully reset.'));
+});

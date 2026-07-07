@@ -29,3 +29,15 @@ export const googleLoginValidation = [
   }),
   body('deviceId').notEmpty().withMessage('Device fingerprint is required'),
 ];
+
+export const forgotPasswordValidation = [
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+];
+
+export const resetPasswordValidation = [
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d])/)
+    .withMessage('Password must contain at least one uppercase, one lowercase, one number, and one special character'),
+];

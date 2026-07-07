@@ -7,6 +7,7 @@ import { SamagamaService } from '../modules/samagama/Samagama.service.js';
 import Device from '../models/Device.js';
 import Role from '../models/Role.js';
 import Redemption from '../models/Redemption.js';
+import User from '../models/User.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
@@ -180,6 +181,7 @@ class AuthService {
           isActive: true,
         });
       }
+      
       const username = email.split('@')[0] + Math.floor(Math.random() * 1000);
       user = await UserRepository.create({
         fullName: name || username,
@@ -255,6 +257,57 @@ class AuthService {
    */
   static async refreshToken(oldRefreshTokenString, deviceId) {
     return await JWTService.rotateRefreshToken(oldRefreshTokenString, deviceId);
+  }
+
+  /**
+   * Request password reset
+   */
+  static async forgotPassword(email) {
+    const user = await UserRepository.findByEmail(email);
+    if (!user) {
+      // Don't leak if email exists, just return silently
+      return;
+    }
+
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Check if token exists and update it, else create
+    await VerificationToken.findOneAndUpdate(
+      { user: user._id, type: 'password_reset' },
+      { 
+        token,
+        expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000) // 1 hour
+      },
+      { upsert: true, new: true }
+    );
+
+    await EmailService.sendPasswordResetEmail(user.email, token);
+  }
+
+  /**
+   * Reset password with token
+   */
+  static async resetPassword(token, newPassword) {
+    const verification = await VerificationToken.findOne({
+      token,
+      type: 'password_reset',
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!verification) {
+      throw ApiError.badRequest('Invalid or expired reset token');
+    }
+
+    const user = await User.findById(verification.user).select('+password');
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    await VerificationToken.deleteOne({ _id: verification._id });
   }
 }
 
