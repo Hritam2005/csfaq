@@ -104,18 +104,18 @@ export const DashboardOverviewPage: React.FC = () => {
 
       <Link
         to="/app/achievements"
-        className="flex items-center justify-between gap-4 rounded-xl border border-primary-100 bg-primary-50 p-5 text-primary-900 shadow-sm transition-colors hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-100 dark:hover:bg-primary-900/30"
+        className="group flex items-center justify-between gap-4 rounded-xl border border-primary-200 bg-gradient-to-r from-primary-50 via-indigo-50/50 to-white p-5 shadow-sm transition-all hover:border-primary-300 hover:shadow-md dark:border-primary-500/30 dark:bg-gradient-to-r dark:from-primary-950/40 dark:via-gray-900 dark:to-gray-900/90 dark:hover:border-primary-500/50"
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white text-primary-600 dark:bg-gray-900 dark:text-primary-400">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md shadow-primary-500/20 transition-transform group-hover:scale-105 dark:bg-primary-500/20 dark:text-primary-400 dark:border dark:border-primary-500/30">
             <Gift className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="font-semibold">Use Spurti Points as Samagama currency</p>
-            <p className="text-sm text-primary-700 dark:text-primary-300">Convert points into coupons for mentor help, learning sessions, reviews, and participant perks.</p>
+            <p className="font-bold text-gray-900 dark:text-white">Use Spurti Points as Samagama currency</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Convert points into coupons for mentor help, learning sessions, reviews, and participant perks.</p>
           </div>
         </div>
-        <span className="shrink-0 text-sm font-semibold">Open Wallet</span>
+        <span className="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all group-hover:bg-primary-700 dark:bg-primary-500 dark:text-gray-950 dark:group-hover:bg-primary-400">Open Wallet</span>
       </Link>
 
       {/* Main Grid: Usage Graph & Activity Feed */}

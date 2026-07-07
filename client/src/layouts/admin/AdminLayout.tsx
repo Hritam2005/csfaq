@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, Shield, FileText, Database, 
-  Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift, Home
+  LayoutDashboard, Users, Shield, FileText, 
+  Menu, X, LogOut, ChevronDown, Gift, Home, Moon, Sun
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
 import { logout } from '../../store/slices/authSlice';
+import { setTheme } from '../../store/slices/themeSlice';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 import { AuthService } from '../../services/AuthService';
 import { ENV } from '../../config/env';
@@ -27,6 +27,11 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { mode } = useSelector((state: RootState) => state.theme);
+
+  const toggleTheme = () => {
+    dispatch(setTheme(mode === 'dark' ? 'light' : 'dark'));
+  };
 
   const handleLogout = async () => {
     try {
@@ -100,7 +105,15 @@ export const AdminLayout: React.FC = () => {
             <Menu className="h-6 w-6" />
           </button>
           
-          <div className="flex flex-1 justify-end items-center gap-4">
+          <div className="flex flex-1 justify-end items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
             <Link 
               to="/" 
               className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
