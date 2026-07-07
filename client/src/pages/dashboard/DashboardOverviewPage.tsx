@@ -7,7 +7,7 @@ import { useDashboardMetrics, useActivityFeed, useRecommendations } from '../../
 import { StatCard } from '../../components/dashboard/StatCard';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';
 import { RecommendationWidget } from '../../components/dashboard/RecommendationWidget';
-import { UsageGraph } from '../../components/dashboard/UsageGraph';
+import { InteractionVolumeTracker } from '../../components/dashboard/InteractionVolumeTracker';
 import { DashboardService } from '../../services/dashboard/DashboardService';
 
 export const DashboardOverviewPage: React.FC = () => {
@@ -62,14 +62,24 @@ export const DashboardOverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-          Welcome back, {(user?.fullName || user?.name || 'User').split(' ')[0]}
-        </h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Here is what's happening across your enterprise knowledge workspace today.
-        </p>
+      {/* Welcome Header with Abstract Educational Essence */}
+      <div className="relative overflow-hidden rounded-2xl border border-blue-200/60 bg-gradient-to-r from-white via-blue-50/30 to-emerald-50/20 p-8 shadow-sm backdrop-blur-xl dark:border-cyan-800/50 dark:from-gray-900/95 dark:via-blue-950/30 dark:to-emerald-950/20">
+        <div className="absolute top-0 right-0 w-[400px] h-[250px] bg-gradient-to-bl from-blue-500/15 via-indigo-500/10 to-transparent blur-[90px] rounded-full pointer-events-none -z-10 animate-pulse" />
+        <div className="absolute -bottom-10 -left-10 w-[250px] h-[250px] bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-transparent blur-[70px] rounded-full pointer-events-none -z-10" />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-500/10 dark:bg-cyan-400/10 border border-blue-500/30 dark:border-cyan-400/30 text-xs font-bold text-blue-700 dark:text-cyan-300 mb-2 shadow-sm backdrop-blur-md">
+              🚀 Vicharanashala Research Internship Dashboard
+            </span>
+            <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+              Welcome back, <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600 dark:from-cyan-400 dark:via-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">{(user?.fullName || user?.name || 'User').split(' ')[0]}</span>!
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl">
+              Track your active contributions, explore crowd-sourced FAQs, and monitor your milestone progression across the IIT Ropar research ecosystem.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Metrics Row */}
@@ -120,13 +130,9 @@ export const DashboardOverviewPage: React.FC = () => {
 
       {/* Main Grid: Usage Graph & Activity Feed */}
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Token Usage Graph */}
-        <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Interaction Volume</h3>
-            <span className="text-xs font-medium text-gray-500">Last 7 Days</span>
-          </div>
-          <UsageGraph />
+        {/* Interaction Volume Tracker (GitHub Commit Graph Style) */}
+        <div className="lg:col-span-2 min-w-0">
+          <InteractionVolumeTracker />
         </div>
 
         {/* Activity Timeline */}
