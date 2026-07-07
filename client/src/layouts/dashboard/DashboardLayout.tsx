@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import {
   Activity, Bookmark, Download, Folder, GraduationCap, History,
   LayoutDashboard, Settings, Upload, Award,
-  MessageSquarePlus, Inbox, Send, UserCircle, LogOut, Moon, Sun
+  MessageSquarePlus, Inbox, Send, UserCircle, LogOut, Moon, Sun, Home
 } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
@@ -61,7 +61,6 @@ export const DashboardLayout: React.FC = () => {
   // We don't have a count of "open" specifically from a single endpoint,
   // so we conservatively use the total — the page itself shows status filters.
   const myQueriesTotal = myQueriesData?.total ?? 0;
-
   const navItems = [
     { name: 'Overview', to: '/app/dashboard', icon: LayoutDashboard, exact: true },
     { name: 'My Queries', to: '/queries/my', icon: Inbox, badgeCount: myQueriesTotal },
@@ -155,14 +154,22 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header (Mobile + Actions) */}
-        <header className="flex h-16 shrink-0 items-center justify-end gap-2 sm:gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 sm:gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
           <button
+            type="button"
             onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
-            title="Toggle theme"
+            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
+          <NavLink 
+            to="/" 
+            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Back to Home"
+          >
+            <Home className="h-5 w-5" />
+          </NavLink>
 
           <NotificationBell />
 

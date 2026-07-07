@@ -51,7 +51,6 @@ setupSwagger(app);
 import { bullBoardRouter } from './config/queue.js';
 
 app.use('/admin/queues', bullBoardRouter);
-app.use('/api/v1/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/v1', routes);
 
 // =============================================================================

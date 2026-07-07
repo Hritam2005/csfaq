@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Database, AlertCircle, Bot, Inbox, PieChart, Activity as ActivityIcon, ArrowRight } from 'lucide-react';
+import { Users, Database, AlertCircle, Bot, Inbox, PieChart, Activity as ActivityIcon, ArrowRight, CheckCircle2, FileQuestion, ShieldAlert, ToggleRight } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { UsageGraph } from '../../components/dashboard/UsageGraph';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';

@@ -8,6 +8,7 @@ import { RootState } from '../../store/store';
 import { setTheme } from '../../store/slices/themeSlice';
 import { logout } from '../../store/slices/authSlice';
 import { AuthService } from '../../services/AuthService';
+import { ENV } from '../../config/env';
 import { useQuery } from '@tanstack/react-query';
 import { TriageService } from '../../services/triage/TriageService';
 
@@ -114,7 +115,15 @@ export const Navbar: React.FC = () => {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
             >
-              <UserCircle className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
+                  alt="User Avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UserCircle className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              )}
             </button>
 
             {dropdownOpen && (

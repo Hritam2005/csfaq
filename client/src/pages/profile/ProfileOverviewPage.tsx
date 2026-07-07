@@ -17,6 +17,7 @@ export const ProfileOverviewPage: React.FC = () => {
   const [name, setName] = useState(user?.fullName || user?.name || '');
   const [title, setTitle] = useState(user?.profile?.title || '');
   const [bio, setBio] = useState(user?.profile?.bio || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
 
   const updateProfileMutation = useMutation({
     mutationFn: (data: any) => apiClient.put('/users/me', data),
@@ -28,39 +29,9 @@ export const ProfileOverviewPage: React.FC = () => {
     onError: () => toast.error('Failed to update profile'),
   });
 
-  const uploadAvatarMutation = useMutation({
-    mutationFn: (file: File) => {
-      const formData = new FormData();
-      formData.append('avatar', file);
-      return apiClient.put('/auth/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-    },
-    onSuccess: (res) => {
-      dispatch(setCredentials({ user: res.data.data, token: token! }));
-      toast.success('Profile picture updated successfully');
-    },
-    onError: () => {
-      toast.error('Failed to upload profile picture');
-    }
-  });
-
-  const deleteAvatarMutation = useMutation({
-    mutationFn: () => apiClient.delete('/auth/avatar'),
-    onSuccess: (res) => {
-      dispatch(setCredentials({ user: res.data.data, token: token! }));
-      toast.success('Profile picture removed');
-    },
-    onError: () => {
-      toast.error('Failed to remove profile picture');
-    }
-  });
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate({ name, profile: { title, bio } });
+    updateProfileMutation.mutate({ name, profile: { title, bio }, avatar });
   };
 
   const handleUploadClick = () => {
@@ -74,13 +45,18 @@ export const ProfileOverviewPage: React.FC = () => {
         toast.error('File size must be under 5MB');
         return;
       }
-      uploadAvatarMutation.mutate(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveClick = () => {
     if (confirm('Are you sure you want to remove your profile picture?')) {
-      deleteAvatarMutation.mutate();
+      setAvatar('');
+      updateProfileMutation.mutate({ name, profile: { title, bio }, avatar: '' });
     }
   };
 
@@ -99,9 +75,9 @@ export const ProfileOverviewPage: React.FC = () => {
             accept="image/*"
             className="hidden"
           />
-          {user?.avatar ? (
+          {avatar ? (
             <img 
-              src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
+              src={avatar.startsWith('http') || avatar.startsWith('data:') ? avatar : `${ENV.API_URL}/${avatar}`}
               alt="Avatar"
               className="h-20 w-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
             />
@@ -116,7 +92,6 @@ export const ProfileOverviewPage: React.FC = () => {
               size="sm" 
               className="gap-2"
               onClick={handleUploadClick}
-              isLoading={uploadAvatarMutation.isPending}
             >
               <Upload className="h-4 w-4" /> Upload new
             </Button>
@@ -125,8 +100,7 @@ export const ProfileOverviewPage: React.FC = () => {
               size="sm" 
               className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
               onClick={handleRemoveClick}
-              isLoading={deleteAvatarMutation.isPending}
-              disabled={!user?.avatar}
+              disabled={!avatar}
             >
               <Trash2 className="h-4 w-4" /> Remove
             </Button>

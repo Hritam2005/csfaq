@@ -50,6 +50,18 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxLength: 500,
     },
+    profile: {
+      title: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      bio: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+    },
     timezone: {
       type: String,
       default: 'UTC',

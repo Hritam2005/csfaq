@@ -222,14 +222,66 @@ class AuthService {
     // Issue JWTs
     const tokens = await JWTService.issueTokens(user, device._id);
 
-    return { user, tokens };
+    const populatedUser = await UserRepository.findById(user._id);
+    return { user: populatedUser || user, tokens };
   }
 
   /**
    * Authenticate or register via Google
    */
-  static async googleLogin(email, name, deviceInfo, ipAddress) {
+  static async googleLogin(token, fallbackEmail, fallbackName, deviceInfo, ipAddress, action) {
+    let email = fallbackEmail;
+    let name = fallbackName;
+    let avatar = undefined;
+
+    // Verify token against Google's official OAuth2 endpoints if token was provided
+    if (token && typeof token === 'string') {
+      try {
+        // Try verifying as OAuth2 access_token first
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          email = data.email || email;
+          name = fallbackName || data.name || data.given_name || name || email?.split('@')[0];
+          avatar = data.picture;
+        } else {
+          // Fallback to tokeninfo endpoint if an id_token (credential) was provided
+          const idRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+          if (idRes.ok) {
+            const idData = await idRes.json();
+            email = idData.email || email;
+            name = fallbackName || idData.name || idData.given_name || name || email?.split('@')[0];
+            avatar = idData.picture;
+          } else if (!email) {
+            throw ApiError.unauthorized('Invalid Google authentication token');
+          }
+        }
+      } catch (err) {
+        if (!email) {
+          throw ApiError.unauthorized('Could not verify Google token: ' + err.message);
+        }
+      }
+    }
+
+    if (!email) {
+      throw ApiError.unauthorized('No verified Google email address found');
+    }
+
     let user = await UserRepository.findByEmail(email, true);
+
+    if (user && user.role?.name?.toLowerCase().includes('admin')) {
+      throw ApiError.forbidden('Google authentication is disabled for Admin accounts. Please use email and password to sign in to the Admin portal.');
+    }
+
+    if (user && action === 'register') {
+      throw ApiError.badRequest('An account associated with this Google email already exists. Please sign in instead.');
+    }
+
+    if (!user && action === 'login') {
+      throw ApiError.notFound('No account found associated with this Google email. Please create an account first.');
+    }
 
     if (!user) {
       // First check if the user already exists in the triage DB. If so,
@@ -243,20 +295,53 @@ class AuthService {
 
     if (!user) {
       let defaultRole = await Role.findOne({ name: 'Registered User' });
+      if (!defaultRole) {
+        defaultRole = await Role.create({
+          name: 'Registered User',
+          description: 'Default role for newly registered users',
+          isSystem: true,
+          isActive: true,
+        });
+      }
       const username = email.split('@')[0] + Math.floor(Math.random() * 1000);
       user = await UserRepository.create({
         fullName: name || username,
         username,
         email,
         password: crypto.randomBytes(32).toString('hex'),
-        role: defaultRole ? defaultRole._id : undefined,
+        role: defaultRole._id,
+        avatar: avatar || undefined,
         accountStatus: 'active',
+        emailVerified: true,
       });
+    } else {
+      let updated = false;
+      if (!user.emailVerified) {
+        user.emailVerified = true;
+        updated = true;
+      }
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+      if (user.failedLoginAttempts > 0) {
+        user.failedLoginAttempts = 0;
+        user.accountLockedUntil = null;
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
     }
 
     if (user.accountStatus !== 'active') {
       throw ApiError.forbidden(`Account is ${user.accountStatus}`);
     }
+
+    // Update lastLogin and lastActivity timestamps in MongoDB
+    user.lastLogin = new Date();
+    user.lastActivity = new Date();
+    await user.save();
 
     let device = await Device.findOne({ user: user._id, deviceId: deviceInfo.deviceId });
     if (!device) {
@@ -273,7 +358,9 @@ class AuthService {
     }
 
     const tokens = await JWTService.issueTokens(user, device._id);
-    return { user, tokens };
+
+    const populatedUser = await UserRepository.findById(user._id);
+    return { user: populatedUser || user, tokens };
   }
 
   /**

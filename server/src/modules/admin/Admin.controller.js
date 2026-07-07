@@ -1,5 +1,6 @@
 import asyncHandler from '../../utils/asyncHandler.js';
 import ApiResponse from '../../utils/ApiResponse.js';
+import ApiError from '../../utils/ApiError.js';
 import { AdminService } from './Admin.service.js';
 import User from '../../models/User.js';
 import Role from '../../models/Role.js';
@@ -8,6 +9,8 @@ import Query from '../queries/Query.model.js';
 import AuditLog from '../../models/AuditLog.js';
 import { Backup, FeatureFlag } from './Admin.model.js';
 import Redemption from '../../models/Redemption.js';
+import RefreshToken from '../../models/RefreshToken.js';
+import VerificationToken from '../../models/VerificationToken.js';
 
 export const getConfigs = asyncHandler(async (req, res) => {
   const configs = await AdminService.getConfigs();
@@ -187,4 +190,71 @@ export const getRedemptions = asyncHandler(async (req, res) => {
     .sort({ redeemedAt: -1 });
 
   res.status(200).json(ApiResponse.success(redemptions, 'Redemptions retrieved successfully'));
+});
+
+export const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const user = await User.findById(userId).populate('role');
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  if (user.role?.name === 'Super Admin') {
+    throw ApiError.forbidden('Cannot remove a Super Admin from the internship');
+  }
+
+  // Emit real-time Socket.IO notification if user is currently online
+  try {
+    const { getIO } = await import('../../config/socket.js');
+    const io = getIO();
+    io.to(user._id.toString()).emit('user_removed', {
+      message: 'You have been excused from the internship'
+    });
+  } catch (err) {
+    console.error('Socket.io not initialized or failed to emit:', err.message);
+  }
+
+  // Perform database deletion (hard delete user and all session/auth tokens)
+  await Promise.all([
+    User.findByIdAndDelete(userId),
+    RefreshToken.deleteMany({ user: userId }),
+    VerificationToken.deleteMany({ user: userId }),
+  ]);
+
+  res.status(200).json(ApiResponse.success(null, 'User successfully removed from the internship'));
+});
+
+export const suspendUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const user = await User.findById(userId).populate('role');
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  if (user.role?.name === 'Super Admin') {
+    throw ApiError.forbidden('Cannot suspend a Super Admin user');
+  }
+
+  const currentStatus = user.accountStatus;
+  const nextStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+  
+  user.accountStatus = nextStatus;
+  await user.save();
+
+  // If suspended, notify the user via socket to log them out
+  if (nextStatus === 'suspended') {
+    try {
+      const { getIO } = await import('../../config/socket.js');
+      const io = getIO();
+      io.to(user._id.toString()).emit('user_removed', {
+        message: 'Your account has been suspended. Please contact support.'
+      });
+    } catch (err) {
+      console.error('Socket notification failed for suspend:', err.message);
+    }
+  }
+
+  res.status(200).json(ApiResponse.success(user, `User status updated to ${nextStatus}`));
 });
