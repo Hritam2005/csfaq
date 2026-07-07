@@ -4,4 +4,14 @@ export const ENV = {
   APP_NAME: import.meta.env.VITE_APP_NAME || 'Enterprise AI Knowledge Hub',
   DEFAULT_THEME: import.meta.env.VITE_DEFAULT_THEME || 'system', // system | light | dark
   GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID || '140697691772-7elssk993d5t1k73lqspi9j0f218e1h3.apps.googleusercontent.com',
+
+  // Query Triage microservice.
+  // In dev we call the backend directly on port 5001 so CORS handling and
+  // cookies behave predictably. In production both can share the same
+  // gateway/reverse proxy, in which case override with VITE_TRIAGE_URL.
+  TRIAGE_URL:
+    import.meta.env.VITE_TRIAGE_URL || 'http://localhost:5001/api/v1',
+  TRIAGE_SOCKET_URL:
+    import.meta.env.VITE_TRIAGE_SOCKET_URL || 'http://localhost:5001',
+  TRIAGE_PROGRAM_ID: import.meta.env.VITE_TRIAGE_PROGRAM_ID || 'prog_cs_2026',
 };

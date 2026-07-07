@@ -6,10 +6,16 @@ import VerificationToken from '../models/VerificationToken.js';
 import { SamagamaService } from '../modules/samagama/Samagama.service.js';
 import Device from '../models/Device.js';
 import Role from '../models/Role.js';
+import User from '../models/User.js';
 import Redemption from '../models/Redemption.js';
 import User from '../models/User.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import {
+  findTriageUserByEmail,
+  verifyTriagePassword,
+  triageRoleToMainRoleName,
+} from '../utils/triageUserLookup.js';
 
 class AuthService {
   /**
@@ -42,10 +48,120 @@ class AuthService {
   }
 
   /**
-   * Authenticate user and issue tokens
+   * Ensure a Role document exists with the given name and return it.
+   * Used when auto-provisioning a user that was authenticated via the
+   * query-triage microservice.
+   */
+  static async ensureRoleByName(roleName) {
+    let role = await Role.findOne({ name: roleName });
+    if (!role) {
+      role = await Role.create({
+        name: roleName,
+        description: `Auto-created ${roleName} role for cross-DB login`,
+        isSystem: true,
+        isActive: true,
+      });
+    }
+    return role;
+  }
+
+  /**
+   * Auto-provision a "mirror" user in the main server's users collection
+   * based on a record from the query-triage microservice database. The
+   * resulting user is active, has a unique username derived from the
+   * email, and reuses the same ObjectId so JWTs stay stable.
+   *
+   * Returns the freshly-created user (already populated with its role).
+   */
+  static async provisionFromTriage(triageUser) {
+    if (!triageUser || !triageUser.email) {
+      throw ApiError.unauthorized('Invalid triage user payload');
+    }
+
+    const email = String(triageUser.email).toLowerCase();
+    const triageRoleName = triageRoleToMainRoleName(triageUser.role);
+    const role = await this.ensureRoleByName(triageRoleName);
+
+    // Reuse the triage ObjectId so that the JWT issued by this endpoint
+    // is also valid against the triage microservice (which stores the
+    // same userId on its query cases).
+    const userId = triageUser._id
+      ? triageUser._id
+      : new (await import('mongoose')).default.Types.ObjectId();
+
+    // Pick a non-colliding username. The triage collection doesn't store
+    // one, so we derive it from the local-part of the email and append
+    // a short hash if there's a conflict.
+    let baseUsername = email.split('@')[0].replace(/[^a-z0-9._-]/gi, '').toLowerCase();
+    if (!baseUsername) baseUsername = 'user';
+    let username = baseUsername;
+    let suffix = 0;
+    // Tight loop: there should be at most a handful of collisions in practice
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const existing = await UserRepository.findByUsername(username);
+      if (!existing) break;
+      suffix += 1;
+      username = `${baseUsername}${suffix}`;
+      if (suffix > 50) {
+        username = `${baseUsername}-${Date.now().toString(36)}`;
+        break;
+      }
+    }
+
+    // Insert directly via the driver to bypass the User schema's pre-save
+    // hook – the triage DB already stores a valid bcrypt hash and we
+    // don't want it re-hashed (which would lock the user out).
+    await User.collection.insertOne({
+      _id: userId,
+      uuid: crypto.randomUUID ? crypto.randomUUID() : undefined,
+      fullName: triageUser.name || baseUsername,
+      username,
+      email,
+      password: triageUser.password,
+      role: role._id,
+      accountStatus: triageUser.isActive === false ? 'inactive' : 'active',
+      emailVerified: true,
+      phoneVerified: false,
+      failedLoginAttempts: 0,
+      accountLockedUntil: null,
+      lastLogin: null,
+      lastActivity: null,
+      isDeleted: false,
+      passwordHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Re-fetch with populated role so the caller can build the JWT payload.
+    return await UserRepository.findByEmail(email, true);
+  }
+
+  /**
+   * Authenticate user and issue tokens.
+   *
+   * If the user is not present in the main server's database, we also
+   * try the query-triage microservice database. If a matching record is
+   * found there AND the password matches its bcrypt hash, we
+   * auto-provision a mirror user in the main DB and continue with the
+   * normal token-issuing flow.
    */
   static async login(email, password, deviceInfo, ipAddress) {
-    const user = await UserRepository.findByEmail(email, true);
+    let user = await UserRepository.findByEmail(email, true);
+
+    // ---- Cross-DB fallback (query-triage microservice) -----------------
+    if (!user) {
+      const triageUser = await findTriageUserByEmail(email);
+      if (triageUser) {
+        const passwordOk = await verifyTriagePassword(triageUser, password);
+        if (!passwordOk) {
+          throw ApiError.unauthorized('Invalid email or password');
+        }
+        // Auto-provision a mirror user in the main DB so future requests
+        // (which only look at csfaq_main.users) still work.
+        user = await this.provisionFromTriage(triageUser);
+      }
+    }
 
     if (!user) {
       throw ApiError.unauthorized('Invalid email or password');
@@ -169,6 +285,16 @@ class AuthService {
 
     if (!user && action === 'login') {
       throw ApiError.notFound('No account found associated with this Google email. Please create an account first.');
+    }
+
+    if (!user) {
+      // First check if the user already exists in the triage DB. If so,
+      // adopt their profile (avatar/role) instead of creating a generic
+      // "Registered User".
+      const triageUser = await findTriageUserByEmail(email);
+      if (triageUser) {
+        user = await this.provisionFromTriage(triageUser);
+      }
     }
 
     if (!user) {

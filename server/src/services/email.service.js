@@ -4,18 +4,27 @@ import { logger } from '../config/logger.js';
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: env.smtp.host,
-      port: env.smtp.port,
-      auth: {
+    const transportConfig = {
+      host: env.smtp.host || 'localhost',
+      port: env.smtp.port || 1025,
+    };
+
+    if (env.smtp.user && env.smtp.password) {
+      transportConfig.auth = {
         user: env.smtp.user,
         pass: env.smtp.password,
-      },
-    });
+      };
+    }
+
+    this.transporter = nodemailer.createTransport(transportConfig);
   }
 
   async sendEmail(to, subject, html) {
     try {
+      if (!env.smtp.host || !env.smtp.user || !env.smtp.password) {
+        logger.info(`[EmailService] SMTP credentials not configured. Skipping email to ${to}: "${subject}"`);
+        return { messageId: `mock-${Date.now()}` };
+      }
       const info = await this.transporter.sendMail({
         from: `"AI Knowledge Hub" <noreply@knowledgehub.internal>`,
         to,
@@ -25,7 +34,7 @@ class EmailService {
       logger.info(`Email sent to ${to}: ${info.messageId}`);
       return info;
     } catch (error) {
-      logger.error('Email sending failed:', error);
+      logger.error('Email sending failed:', error.message || error);
       // Don't throw to prevent stopping the auth flow, but log it
     }
   }
