@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Menu, UserCircle, Inbox, Search } from 'lucide-react';
+import { Moon, Sun, Menu, UserCircle, Inbox, Search, X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../ui/Button';
 import { NotificationBell } from '../ui/NotificationBell';
@@ -17,6 +17,7 @@ export const Navbar: React.FC = () => {
   const { mode } = useSelector((state: RootState) => state.theme);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleTheme = () => {
@@ -178,11 +179,60 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-background">
+          <div className="px-4 py-4 space-y-3">
+            <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+            <Link to="/faqs" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setMobileMenuOpen(false)}>FAQs</Link>
+            
+            {isAuthenticated && isAdmin && (
+              <Link
+                to="/admin/triage/inbox"
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Inbox className="h-5 w-5" />
+                Triage Queue
+                {awaitingBadge > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-600 text-white">
+                    {awaitingBadge}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {!(isAuthenticated && isAdmin) && (
+              <Link to="/support" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setMobileMenuOpen(false)}>Support (Unknown Questions)</Link>
+            )}
+            
+            <a href="https://samagama.in" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800" onClick={() => setMobileMenuOpen(false)}>Samagama</a>
+            
+            {/* Mobile Search */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                window.dispatchEvent(new Event('open-command-palette'));
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              <Search className="h-5 w-5" />
+              Search...
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

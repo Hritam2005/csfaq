@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import {
   Activity, Bookmark, Download, Folder, GraduationCap, History,
   LayoutDashboard, Settings, Upload, Award,
-  MessageSquarePlus, Inbox, Send, UserCircle, LogOut, Moon, Sun, Home
+  MessageSquarePlus, Inbox, Send, UserCircle, LogOut, Moon, Sun, Home, Menu, X
 } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
@@ -17,6 +17,7 @@ import { AuthService } from '../../services/AuthService';
 
 export const DashboardLayout: React.FC = () => {
   const dispatch = useDispatch();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, isAuthenticated } = useSelector((s: RootState) => s.auth);
   const { mode } = useSelector((s: RootState) => s.theme);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -49,7 +50,6 @@ export const DashboardLayout: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Live count of user's open (non-resolved/non-closed) queries → drives the badge on "My Queries".
   const { data: myQueriesData } = useQuery({
     queryKey: ['my-open-queries-count'],
     queryFn: () => TriageService.getMyQueries({ limit: 1 }),
@@ -58,8 +58,6 @@ export const DashboardLayout: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // We don't have a count of "open" specifically from a single endpoint,
-  // so we conservatively use the total — the page itself shows status filters.
   const myQueriesTotal = myQueriesData?.total ?? 0;
   const navItems = [
     { name: 'Overview', to: '/app/dashboard', icon: LayoutDashboard, exact: true },
@@ -74,11 +72,25 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-background">
+    <div className="flex min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-background overflow-hidden relative">
       
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900/50 hidden md:block">
-        <nav className="flex h-full flex-col p-4 space-y-1">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 md:hidden">
+          <span className="text-lg font-bold text-gray-900 dark:text-white">Dashboard</span>
+          <button onClick={() => setSidebarOpen(false)}>
+            <X className="h-6 w-6 text-gray-500" />
+          </button>
+        </div>
+        <nav className="flex h-full flex-col p-4 space-y-1 overflow-y-auto pb-20 md:pb-4">
           {navItems.map((item) => {
             if (item.name === 'Learning Progress') {
               return (
@@ -88,6 +100,7 @@ export const DashboardLayout: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800/50"
+                  onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
                   {item.name}
@@ -101,6 +114,7 @@ export const DashboardLayout: React.FC = () => {
                 key={item.name}
                 to={item.to}
                 end={item.exact}
+                onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   cn(
                     'group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -135,6 +149,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
             <NavLink
               to="/app/settings"
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -154,24 +169,31 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header (Mobile + Actions) */}
-        <header className="flex h-16 shrink-0 items-center justify-end gap-3 sm:gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
           <button
             type="button"
-            onClick={toggleTheme}
-            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            className="md:hidden -ml-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            onClick={() => setSidebarOpen(true)}
           >
-            {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <Menu className="h-6 w-6" />
           </button>
-          <NavLink 
-            to="/" 
-            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Back to Home"
-          >
-            <Home className="h-5 w-5" />
-          </NavLink>
-
-          <NotificationBell />
+          
+          <div className="flex flex-1 justify-end items-center gap-2 sm:gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+            <NavLink 
+              to="/" 
+              className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Back to Home"
+            >
+              <Home className="h-5 w-5" />
+            </NavLink>
+            <NotificationBell />
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -206,6 +228,7 @@ export const DashboardLayout: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
           </div>
         </header>
 
