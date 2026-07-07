@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -50,6 +51,7 @@ setupSwagger(app);
 import { bullBoardRouter } from './config/queue.js';
 
 app.use('/admin/queues', bullBoardRouter);
+app.use('/api/v1/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/v1', routes);
 
 // =============================================================================

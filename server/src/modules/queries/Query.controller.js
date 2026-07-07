@@ -2,6 +2,27 @@ import Query from './Query.model.js';
 import { logger } from '../../config/logger.js';
 import ApiError from '../../utils/ApiError.js';
 
+const determinePriority = (question) => {
+  const text = question.toLowerCase();
+  const highKeywords = [
+    'urgent', 'asap', 'emergency', 'broken', 'critical',
+    'crash', 'blocker', 'blocking', 'cannot login',
+    'login issue', 'error 500', 'fatal'
+  ];
+  const mediumKeywords = [
+    'bug', 'help', 'issue', 'incorrect', 'wrong',
+    'missing', 'delay', 'slow', 'unable to', 'fail'
+  ];
+
+  if (highKeywords.some(kw => text.includes(kw))) {
+    return 'High';
+  }
+  if (mediumKeywords.some(kw => text.includes(kw))) {
+    return 'Medium';
+  }
+  return 'Low';
+};
+
 export const submitQuery = async (req, res, next) => {
   try {
     const { question } = req.body;
@@ -10,9 +31,12 @@ export const submitQuery = async (req, res, next) => {
       throw new ApiError(400, 'Question is required');
     }
 
+    const priority = determinePriority(question);
+
     const query = await Query.create({
       user: req.user._id,
-      question
+      question,
+      priority
     });
 
     res.status(201).json({
@@ -85,6 +109,24 @@ export const resolveQuery = async (req, res, next) => {
       success: true,
       data: query,
       message: 'Query resolved successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteQuery = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const query = await Query.findByIdAndDelete(id);
+
+    if (!query) {
+      throw new ApiError(404, 'Query not found');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Query deleted successfully'
     });
   } catch (error) {
     next(error);

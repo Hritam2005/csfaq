@@ -91,13 +91,24 @@ export const SupportPage: React.FC = () => {
             {myQueries.map((q: any) => (
               <div key={q._id} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-5">
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    q.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    q.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {q.status}
-                  </span>
+                  <div className="flex gap-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                      q.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                      q.status === 'Resolved' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {q.status}
+                    </span>
+                    {(!q.priority || q.priority === 'Low') && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Low Priority</span>
+                    )}
+                    {q.priority === 'Medium' && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Medium Priority</span>
+                    )}
+                    {q.priority === 'High' && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-bold">High Priority</span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-500">{new Date(q.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-gray-900 dark:text-white font-medium mb-3">{q.question}</p>

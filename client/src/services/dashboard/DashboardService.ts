@@ -81,4 +81,9 @@ export class DashboardService {
     const res = await apiClient.patch(`/samagama/redemptions/${id}/use`);
     return res.data.data;
   }
+
+  static async resetSpurtiPoints() {
+    const res = await apiClient.post('/samagama/spurti-points/reset');
+    return res.data;
+  }
 }
