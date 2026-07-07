@@ -57,7 +57,7 @@ The **CSFAQ (Yaksha AI Knowledge Platform)** is a state-of-the-art, tri-tier sys
 ## 🏛️ System Architecture
 
 ```mermaid
-graph TD
+flowchart TD
     Client["Frontend Client (React 19 + TypeScript + Vite)"]
     Gateway["Backend Core & API Gateway (Node.js + Express 5 + Socket.IO)"]
     AIEngine["AI & Vector Engine (Python + FastAPI + FAISS + Gemini)"]
