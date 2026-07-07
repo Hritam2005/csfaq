@@ -13,6 +13,7 @@ export const AI_EVENTS = {
 
 export const PROVIDER_TYPES = {
   OPENAI: 'openai',
+  GROQ: 'groq',
   GEMINI: 'gemini',
   ANTHROPIC: 'anthropic',
   OPENROUTER: 'openrouter',

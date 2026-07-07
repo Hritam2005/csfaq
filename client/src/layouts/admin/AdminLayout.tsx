@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, Shield, FileText, Database, 
+  LayoutDashboard, Users, Shield, FileText, Database, BookOpen,
   Bot, Search, BarChart3, Settings, Server, 
   History, ShieldCheck, Menu, X, LogOut, ChevronDown 
 } from 'lucide-react';
@@ -16,6 +16,7 @@ const sidebarNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles & Permissions', href: '/admin/roles', icon: Shield },
   { name: 'User Queries', href: '/admin/queries', icon: FileText },
+  { name: 'Knowledge Base', href: '/admin/knowledge', icon: BookOpen },
   { name: 'Documents / PDFs', href: '/admin/documents', icon: Database },
   { name: 'AI Models & Prompts', href: '/admin/ai', icon: Bot },
   { name: 'Search Settings', href: '/admin/search', icon: Search },

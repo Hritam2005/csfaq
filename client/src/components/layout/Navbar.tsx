@@ -47,9 +47,7 @@ export const Navbar: React.FC = () => {
         {/* Logo & Primary Nav */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">V</span>
-            </div>
+            <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
               Vicharanashala
             </span>
@@ -57,7 +55,7 @@ export const Navbar: React.FC = () => {
           
           <div className="hidden md:flex gap-6">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Home</Link>
-            <Link to="/faqs" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">FAQs</Link>
+            <Link to="/faqs" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Knowledge Base</Link>
             <Link to="/support" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Support (Unknown Questions)</Link>
             <a href="/#timeline" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Timeline</a>
           </div>

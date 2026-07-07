@@ -8,6 +8,7 @@ import { AIAnalytics } from '../analytics/AIAnalytics.js';
 import { ConfidenceCalculator } from '../analytics/ConfidenceCalculator.js';
 import { CitationBuilder } from '../../knowledge-engine/citations/CitationBuilder.js';
 import { ResponseGuard } from './ResponseGuard.js';
+import { SuggestedQuestions } from '../../chat/suggestions/SuggestedQuestions.js';
 
 export class AIOrchestrator {
   /**
@@ -51,7 +52,7 @@ export class AIOrchestrator {
     ];
 
     // 6. Execute Provider Call
-    const provider = ProviderFactory.getProvider('openai');
+    const provider = ProviderFactory.getActiveProvider();
     const response = await provider.generate(messages);
 
     // 7. Format Citations
@@ -69,7 +70,7 @@ export class AIOrchestrator {
     await AIAnalytics.logUsage({
       conversationId: conversation._id,
       userId: user._id,
-      provider: 'openai',
+      provider: provider.providerType,
       model: provider.defaultModel,
       promptTokens: response.usage?.prompt_tokens || 0,
       completionTokens: response.usage?.completion_tokens || 0,
@@ -85,7 +86,7 @@ export class AIOrchestrator {
       response: response.content,
       citations,
       confidence,
-      suggestions: [],
+      suggestions: SuggestedQuestions.generate(response.content),
     };
   }
 
@@ -126,7 +127,7 @@ export class AIOrchestrator {
     // Send initial metadata
     res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: conversation._id, citations })}\n\n`);
 
-    const provider = ProviderFactory.getProvider('openai');
+    const provider = ProviderFactory.getActiveProvider();
     let fullContent = '';
 
     // Simulate streaming by receiving an async iterable from the provider
@@ -147,7 +148,7 @@ export class AIOrchestrator {
     await AIAnalytics.logUsage({
       conversationId: conversation._id,
       userId: user._id,
-      provider: 'openai',
+      provider: provider.providerType,
       model: provider.defaultModel,
       promptTokens: 0, // In streaming, tokens must be estimated or fetched differently
       completionTokens: 0, 
@@ -158,7 +159,7 @@ export class AIOrchestrator {
       confidenceRating: confidence.rating,
     });
 
-    res.write(`data: ${JSON.stringify({ type: 'done', confidence })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'done', confidence, suggestions: SuggestedQuestions.generate(fullContent) })}\n\n`);
     res.end();
   }
 
@@ -197,7 +198,7 @@ export class AIOrchestrator {
 
     socket.emit('chat_metadata', { conversationId: conversation._id, citations });
 
-    const provider = ProviderFactory.getProvider('openai');
+    const provider = ProviderFactory.getActiveProvider();
     let fullContent = '';
 
     const stream = await provider.generateStream(messages);
@@ -215,7 +216,7 @@ export class AIOrchestrator {
     await AIAnalytics.logUsage({
       conversationId: conversation._id,
       userId: user._id,
-      provider: 'openai',
+      provider: provider.providerType,
       model: provider.defaultModel,
       promptTokens: 0,
       completionTokens: 0,
@@ -226,6 +227,11 @@ export class AIOrchestrator {
       confidenceRating: confidence.rating,
     });
 
-    socket.emit('chat_done', { confidence, conversationId: conversation._id });
+    socket.emit('chat_done', {
+      confidence,
+      conversationId: conversation._id,
+      citations,
+      suggestions: SuggestedQuestions.generate(fullContent),
+    });
   }
 }

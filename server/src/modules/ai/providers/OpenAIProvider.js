@@ -6,6 +6,7 @@ import { env } from '../../../config/env.js';
 export class OpenAIProvider extends LLMProvider {
   constructor() {
     super();
+    this.providerType = 'openai';
     this.defaultModel = 'gpt-4o-mini';
   }
 

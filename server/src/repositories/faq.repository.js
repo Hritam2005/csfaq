@@ -25,11 +25,53 @@ class FAQRepository {
     const searchFilter = query ? { $text: { $search: query } } : {};
     const finalQuery = { ...searchFilter, ...filters };
 
-    return await FAQ.find(finalQuery, { score: { $meta: 'textScore' } })
-      .sort({ score: { $meta: 'textScore' } })
+    return await FAQ.find(finalQuery, query ? { score: { $meta: 'textScore' } } : {})
+      .sort(query ? { score: { $meta: 'textScore' } } : { publishedAt: -1 })
       .limit(20)
-      .populate('category', 'name')
+      .populate('category', 'name slug color')
       .populate('tags', 'name');
+  }
+
+  static async findPublished({ query, category, limit = 50, skip = 0 } = {}) {
+    const filters = {
+      isDeleted: false,
+      approvalStatus: 'approved',
+      visibility: 'public',
+    };
+
+    if (category) {
+      filters.category = category;
+    }
+
+    if (query) {
+      return this.searchFaqs(query, filters);
+    }
+
+    return await FAQ.find(filters)
+      .sort({ popularityScore: -1, publishedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('category', 'name slug color')
+      .select('question summary slug category popularityScore helpfulCount publishedAt difficultyLevel');
+  }
+
+  static async findPopular(limit = 6) {
+    return await FAQ.find({
+      isDeleted: false,
+      approvalStatus: 'approved',
+      visibility: 'public',
+    })
+      .sort({ popularityScore: -1, helpfulCount: -1 })
+      .limit(limit)
+      .select('question summary category')
+      .populate('category', 'name slug');
+  }
+
+  static async countByCategory() {
+    return await FAQ.aggregate([
+      { $match: { isDeleted: false, approvalStatus: 'approved', visibility: 'public' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
   }
 
   static async updateById(id, updateData) {

@@ -19,7 +19,7 @@ export const chat = asyncHandler(async (req, res) => {
 export const streamChat = asyncHandler(async (req, res) => {
   // Simplified implementation just demonstrating streaming binding
   const { prompt } = req.body;
-  const provider = ProviderFactory.getProvider('openai');
+  const provider = ProviderFactory.getActiveProvider();
   const generator = provider.stream([{ role: 'user', content: prompt }]);
   
   await TokenStreamer.streamResponse(res, generator);

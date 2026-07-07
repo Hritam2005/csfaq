@@ -47,6 +47,7 @@ import { AdminUsersPage } from '../pages/admin/users/AdminUsersPage';
 import { AdminRolesPage } from '../pages/admin/roles/AdminRolesPage';
 import { AdminAISettingsPage } from '../pages/admin/settings/AdminAISettingsPage';
 import { AdminDocumentsPage } from '../pages/admin/documents/AdminDocumentsPage';
+import { AdminKnowledgePage } from '../pages/admin/knowledge/AdminKnowledgePage';
 import { AdminQueriesPage } from '../pages/admin/queries/AdminQueriesPage';
 import { SupportPage } from '../pages/public/SupportPage';
 
@@ -171,7 +172,7 @@ export const appRouter = createBrowserRouter([
       { path: 'dashboard', element: <AdminDashboardPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'roles', element: <AdminRolesPage /> },
-      { path: 'knowledge', element: <div className="p-8">Knowledge Management coming soon</div> },
+      { path: 'knowledge', element: <AdminKnowledgePage /> },
       { path: 'documents', element: <AdminDocumentsPage /> },
       { path: 'queries', element: <AdminQueriesPage /> },
       { path: 'ai', element: <AdminAISettingsPage /> },

@@ -6,6 +6,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   citations?: any[];
+  confidence?: { score: number; rating: string };
 }
 
 export interface Conversation {

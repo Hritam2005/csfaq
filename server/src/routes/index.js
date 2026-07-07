@@ -9,6 +9,7 @@ import chatRoutes from '../modules/chat/Chat.routes.js';
 import analyticsRoutes from '../modules/analytics/Analytics.routes.js';
 import adminRoutes from '../modules/admin/Admin.routes.js';
 import queryRoutes from '../modules/queries/Query.routes.js';
+import faqRoutes from '../modules/knowledge/FAQ.routes.js';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ const router = Router();
 router.use('/health', healthRoutes); // old health route
 router.use('/auth', authRoutes);
 router.use('/documents', documentRoutes);
+router.use('/knowledge/faqs', faqRoutes);
 router.use('/knowledge', knowledgeRoutes);
 router.use('/search', searchRoutes);
 router.use('/ai', aiRoutes);

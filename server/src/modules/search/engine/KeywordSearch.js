@@ -15,7 +15,12 @@ export class KeywordSearch {
 
     const [faqs, chunks] = await Promise.all([
       FAQ.find(
-        { $text: { $search: mongoQueryString }, isDeleted: false },
+        {
+          $text: { $search: mongoQueryString },
+          isDeleted: false,
+          approvalStatus: 'approved',
+          visibility: 'public',
+        },
         { score: { $meta: 'textScore' } }
       )
       .sort({ score: { $meta: 'textScore' } })
