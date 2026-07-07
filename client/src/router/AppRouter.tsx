@@ -59,10 +59,14 @@ import { AdminQueryDetailPage } from '../pages/triage/admin/AdminQueryDetailPage
 import { TriageCapacityPage } from '../pages/triage/admin/TriageCapacityPage';
 import { TriageWorkloadPage } from '../pages/triage/admin/TriageWorkloadPage';
 import { IncidentDetailPage } from '../pages/triage/admin/IncidentDetailPage';
+import { RootLayout } from '../layouts/RootLayout';
 
 export const appRouter = createBrowserRouter([
   {
-    path: '/profile',
+    element: <RootLayout />,
+    children: [
+      {
+        path: '/profile',
     element: (
       <ErrorBoundary>
         <AuthGate>
@@ -253,8 +257,10 @@ export const appRouter = createBrowserRouter([
     path: '/unauthorized',
     element: <div className="p-8 text-center text-xl text-red-500">403 Unauthorized Access</div>,
   },
-  {
-    path: '*',
-    element: <NotFoundPage />,
+      {
+        path: '*',
+        element: <NotFoundPage />,
+      },
+    ],
   },
 ]);

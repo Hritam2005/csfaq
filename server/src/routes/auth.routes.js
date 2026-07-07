@@ -1,12 +1,6 @@
 import { Router } from 'express';
-<<<<<<< Updated upstream
-import { register, login, logout, refresh, getProfile, dropOutInternship, updatePassword } from '../controllers/auth.controller.js';
-import { registerValidation, loginValidation, refreshValidation } from '../validators/auth.validator.js';
-=======
-import { register, login, logout, refresh, getProfile, dropOutInternship, uploadAvatar, deleteAvatar, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
-import { uploadAvatarMiddleware } from '../middlewares/upload.middleware.js';
+import { register, login, logout, refresh, getProfile, dropOutInternship, updatePassword, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
 import { registerValidation, loginValidation, refreshValidation, forgotPasswordValidation, resetPasswordValidation } from '../validators/auth.validator.js';
->>>>>>> Stashed changes
 import { validate } from '../middlewares/validate.middleware.js';
 import { authLimiter } from '../middlewares/rateLimiter.middleware.js';
 import { auditAction } from '../middlewares/audit.middleware.js';

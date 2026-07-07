@@ -8,7 +8,6 @@ import Device from '../models/Device.js';
 import Role from '../models/Role.js';
 import User from '../models/User.js';
 import Redemption from '../models/Redemption.js';
-import User from '../models/User.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import {

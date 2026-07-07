@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Menu, UserCircle, Inbox } from 'lucide-react';
+import { Moon, Sun, Menu, UserCircle, Inbox, Search } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../ui/Button';
 import { NotificationBell } from '../ui/NotificationBell';
@@ -103,6 +103,17 @@ export const Navbar: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+            className="hidden sm:flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-400 px-3 py-1.5 rounded-md transition-colors"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden lg:inline-block">Search...</span>
+            <kbd className="hidden lg:inline-flex items-center gap-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-1.5 font-mono text-[10px] font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-xs">Ctrl</span> K
+            </kbd>
+          </button>
+
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
