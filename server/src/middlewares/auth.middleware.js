@@ -37,6 +37,9 @@ export const authenticate = async (req, res, next) => {
     }
 
     // Check account status
+    if (currentUser.accountStatus === 'suspended') {
+      throw ApiError.forbidden('Your account has been suspended by an administrator. You can no longer access the website or dashboard.');
+    }
     if (currentUser.accountStatus !== 'active') {
       throw ApiError.forbidden(`Account is ${currentUser.accountStatus}. Contact support.`);
     }

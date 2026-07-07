@@ -175,6 +175,9 @@ class AuthService {
       }
     }
 
+    if (user.accountStatus === 'suspended') {
+      throw ApiError.forbidden('Your account has been suspended by an administrator. You can no longer access the website or dashboard.');
+    }
     if (user.accountStatus !== 'active') {
       throw ApiError.forbidden(`Account is ${user.accountStatus}`);
     }
@@ -334,6 +337,9 @@ class AuthService {
       }
     }
 
+    if (user.accountStatus === 'suspended') {
+      throw ApiError.forbidden('Your account has been suspended by an administrator. You can no longer access the website or dashboard.');
+    }
     if (user.accountStatus !== 'active') {
       throw ApiError.forbidden(`Account is ${user.accountStatus}`);
     }

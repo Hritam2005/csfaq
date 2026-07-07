@@ -11,6 +11,7 @@ import { Backup, FeatureFlag } from './Admin.model.js';
 import Redemption from '../../models/Redemption.js';
 import RefreshToken from '../../models/RefreshToken.js';
 import VerificationToken from '../../models/VerificationToken.js';
+import Device from '../../models/Device.js';
 
 export const getConfigs = asyncHandler(async (req, res) => {
   const configs = await AdminService.getConfigs();
@@ -215,11 +216,15 @@ export const deleteUser = asyncHandler(async (req, res) => {
     console.error('Socket.io not initialized or failed to emit:', err.message);
   }
 
-  // Perform database deletion (hard delete user and all session/auth tokens)
+  // Perform database deletion (hard delete user and completely wipe all associated data from MongoDB)
   await Promise.all([
     User.findByIdAndDelete(userId),
     RefreshToken.deleteMany({ user: userId }),
     VerificationToken.deleteMany({ user: userId }),
+    Device.deleteMany({ user: userId }),
+    AuditLog.deleteMany({ user: userId }),
+    Redemption.deleteMany({ user: userId }),
+    Query.deleteMany({ author: userId }),
   ]);
 
   res.status(200).json(ApiResponse.success(null, 'User successfully removed from the internship'));
