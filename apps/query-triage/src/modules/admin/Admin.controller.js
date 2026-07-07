@@ -22,7 +22,7 @@ const inboxQuerySchema = Joi.object({
 });
 
 const claimSchema = Joi.object({
-  resolverName: Joi.string().required(),
+  resolverName: Joi.string().optional().allow('', null),
 });
 
 const answerSchema = Joi.object({

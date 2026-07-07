@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Menu, UserCircle, Inbox, MessageSquarePlus } from 'lucide-react';
+import { Moon, Sun, Menu, UserCircle, Inbox } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../ui/Button';
 import { NotificationBell } from '../ui/NotificationBell';
@@ -92,15 +92,6 @@ export const Navbar: React.FC = () => {
                     {awaitingBadge}
                   </span>
                 )}
-              </Link>
-            )}
-            {isAuthenticated && !isAdmin && (
-              <Link
-                to="/queries/new"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-              >
-                <MessageSquarePlus className="h-4 w-4" />
-                Submit a Query
               </Link>
             )}
 

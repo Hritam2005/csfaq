@@ -1,19 +1,53 @@
-import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import {
   Activity, Bookmark, Download, Folder, GraduationCap, History,
   LayoutDashboard, Settings, Upload, Award,
-  MessageSquarePlus, Inbox, Send
+  MessageSquarePlus, Inbox, Send, UserCircle, LogOut, Moon, Sun
 } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
 import { useQuery } from '@tanstack/react-query';
 import { TriageService } from '../../services/triage/TriageService';
+import { logout } from '../../store/slices/authSlice';
+import { setTheme } from '../../store/slices/themeSlice';
+import { AuthService } from '../../services/AuthService';
 
 export const DashboardLayout: React.FC = () => {
+  const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((s: RootState) => s.auth);
+  const { mode } = useSelector((s: RootState) => s.theme);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const toggleTheme = () => {
+    dispatch(setTheme(mode === 'dark' ? 'light' : 'dark'));
+  };
+
+  const userRole = (user?.role ?? '').toString();
+  const isAdmin = userRole.toLowerCase().includes('admin') || userRole === 'Super Admin';
+
+  const handleLogout = async () => {
+    try {
+      await AuthService.logout();
+    } catch (e) {
+      console.error('Logout failed on backend', e);
+    }
+    dispatch(logout());
+    setDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Live count of user's open (non-resolved/non-closed) queries → drives the badge on "My Queries".
   const { data: myQueriesData } = useQuery({
@@ -121,8 +155,51 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header (Mobile + Actions) */}
-        <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-2 sm:gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+          <button
+            onClick={toggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
+            title="Toggle theme"
+          >
+            {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
           <NotificationBell />
+
+          {/* Profile Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+              title="User menu"
+            >
+              <UserCircle className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800 z-50">
+                {isAuthenticated ? (
+                  <>
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name || user?.fullName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                    </div>
+                    {isAdmin && (
+                      <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Admin Dashboard</Link>
+                    )}
+                    <Link to="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Home Page</Link>
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Edit Profile</Link>
+                    <Link to="/app/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Workspace Settings</Link>
+                    <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">Sign Out</button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Sign In</Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12">
@@ -135,3 +212,4 @@ export const DashboardLayout: React.FC = () => {
     </div>
   );
 };
+

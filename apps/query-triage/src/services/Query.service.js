@@ -523,6 +523,81 @@ export class QueryService {
       totalAffected: linkedCases.length,
     };
   }
+
+  /**
+   * Update user query
+   */
+  static async updateUserQuery(queryId, userId, updateData) {
+    const queryCase = await QueryCase.findById(queryId);
+    
+    if (!queryCase || queryCase.isDeleted) {
+      throw ApiError.notFound('Query not found');
+    }
+
+    if (queryCase.userId !== userId?.toString() && !['Admin', 'Super Admin'].includes(userId)) {
+      throw ApiError.forbidden('You can only update your own queries');
+    }
+
+    if (updateData.title !== undefined) queryCase.title = updateData.title;
+    if (updateData.body !== undefined) queryCase.body = updateData.body;
+    if (updateData.attachments !== undefined) queryCase.attachments = updateData.attachments;
+    
+    await queryCase.save();
+
+    await AuditService.log({
+      queryCaseId: queryCase._id,
+      eventType: EVENT_TYPES.UPDATED,
+      actorType: ActorType.USER,
+      actorId: userId,
+      toStatus: queryCase.status,
+      metadata: { updatedFields: Object.keys(updateData) },
+    });
+
+    if (queryCase.userId) {
+      emitToUser(queryCase.userId, 'query:updated', {
+        queryId: queryCase._id,
+        status: queryCase.status,
+      });
+    }
+
+    return queryCase;
+  }
+
+  /**
+   * Delete user query (soft delete)
+   */
+  static async deleteUserQuery(queryId, userId) {
+    const queryCase = await QueryCase.findById(queryId);
+    
+    if (!queryCase || queryCase.isDeleted) {
+      throw ApiError.notFound('Query not found');
+    }
+
+    if (queryCase.userId !== userId?.toString() && !['Admin', 'Super Admin'].includes(userId)) {
+      throw ApiError.forbidden('You can only delete your own queries');
+    }
+
+    const previousStatus = queryCase.status;
+    queryCase.isDeleted = true;
+    await queryCase.save();
+
+    await AuditService.log({
+      queryCaseId: queryCase._id,
+      eventType: EVENT_TYPES.DELETED,
+      actorType: ActorType.USER,
+      actorId: userId,
+      fromStatus: previousStatus,
+      toStatus: 'deleted',
+    });
+
+    if (queryCase.userId) {
+      emitToUser(queryCase.userId, 'query:deleted', {
+        queryId: queryCase._id,
+      });
+    }
+
+    return { success: true };
+  }
 }
 
 export default QueryService;

@@ -68,6 +68,17 @@ export const TriageService = {
     return res.data;
   },
 
+  /** Update an existing user query (title, body, attachments). */
+  updateQuery: async (id: string, payload: { title?: string; body?: string; attachments?: any[] }): Promise<QueryCase> => {
+    const res = await triageApiClient.patch<QueryCase>(`/queries/${id}`, payload);
+    return res.data;
+  },
+
+  /** Delete a user query. */
+  deleteQuery: async (id: string): Promise<void> => {
+    await triageApiClient.delete(`/queries/${id}`);
+  },
+
   // ---------- Admin / Resolver ------------------------------------------
 
   /**

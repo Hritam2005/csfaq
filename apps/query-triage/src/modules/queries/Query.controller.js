@@ -6,13 +6,13 @@ import Joi from 'joi';
 
 // Validation schemas
 const submitQuerySchema = Joi.object({
-  idempotencyKey: Joi.string().uuid().optional(),
+  idempotencyKey: Joi.string().optional().allow('', null),
   programId: Joi.string().required(),
   channel: Joi.string().valid('unified_intake', 'community', 'support', 'faq_search', 'ask_ai').default('unified_intake'),
   externalRef: Joi.object({
     type: Joi.string().valid('CommunityPost', 'SupportRequest', 'UnresolvedSearch'),
     id: Joi.string(),
-  }).optional(),
+  }).optional().allow(null),
   title: Joi.string().required().min(5).max(500),
   body: Joi.string().required().min(10).max(5000),
   attachments: Joi.array().items(Joi.object({
@@ -22,10 +22,10 @@ const submitQuerySchema = Joi.object({
     sizeBytes: Joi.number().positive(),
   })).optional().default([]),
   humanRequested: Joi.boolean().optional().default(false),
-  humanRequestReason: Joi.string().max(500).optional(),
+  humanRequestReason: Joi.string().max(500).optional().allow('', null),
   affectedUsers: Joi.string().valid('one', 'several', 'many', 'unknown').optional().default('one'),
-  deadlineAt: Joi.string().isoDate().optional(),
-  userUrgencyReason: Joi.string().max(500).optional(),
+  deadlineAt: Joi.string().isoDate().optional().allow('', null),
+  userUrgencyReason: Joi.string().max(500).optional().allow('', null),
 });
 
 const requestHumanSchema = Joi.object({
@@ -34,8 +34,19 @@ const requestHumanSchema = Joi.object({
 
 const closeCaseSchema = Joi.object({
   satisfied: Joi.boolean().required(),
-  comment: Joi.string().max(1000).optional(),
+  comment: Joi.string().max(1000).optional().allow('', null),
 });
+
+const updateQuerySchema = Joi.object({
+  title: Joi.string().min(5).max(500).optional(),
+  body: Joi.string().min(10).max(5000).optional(),
+  attachments: Joi.array().items(Joi.object({
+    fileId: Joi.string(),
+    url: Joi.string().uri(),
+    mimeType: Joi.string(),
+    sizeBytes: Joi.number().positive(),
+  })).optional(),
+}).min(1);
 
 /**
  * @route   POST /api/v1/queries
@@ -80,7 +91,7 @@ export const getMyQueries = asyncHandler(async (req, res) => {
   });
 
   res.status(200).json(
-    ApiResponse.success(result.queries, 'Queries retrieved successfully', 200)
+    ApiResponse.success(result, 'Queries retrieved successfully', 200)
   );
 });
 
@@ -155,5 +166,43 @@ export const closeCase = asyncHandler(async (req, res) => {
       status: queryCase.status,
       userSatisfaction: queryCase.userSatisfaction,
     }, 'Query closed successfully')
+  );
+});
+
+/**
+ * @route   PATCH/PUT /api/v1/queries/:id
+ * @desc    Update a query
+ * @access  Private
+ */
+export const updateQuery = asyncHandler(async (req, res) => {
+  const { error, value } = updateQuerySchema.validate(req.body, { abortEarly: false });
+  
+  if (error) {
+    throw ApiError.validationError(error.details.map(d => d.message));
+  }
+
+  const { id } = req.params;
+  const userId = req.user._id?.toString();
+  
+  const queryCase = await QueryService.updateUserQuery(id, userId, value);
+
+  res.status(200).json(
+    ApiResponse.success(queryCase, 'Query updated successfully')
+  );
+});
+
+/**
+ * @route   DELETE /api/v1/queries/:id
+ * @desc    Delete a query
+ * @access  Private
+ */
+export const deleteQuery = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user._id?.toString();
+  
+  await QueryService.deleteUserQuery(id, userId);
+
+  res.status(200).json(
+    ApiResponse.success(null, 'Query deleted successfully')
   );
 });

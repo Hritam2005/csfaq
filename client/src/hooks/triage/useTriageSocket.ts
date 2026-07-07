@@ -48,6 +48,7 @@ export function useTriageSocket(options: UseTriageSocketOptions = {}) {
       ['query:updated', (p) => onEvent?.('query:updated', p)],
       ['query:assigned', (p) => onEvent?.('query:assigned', p)],
       ['query:resolved', (p) => onEvent?.('query:resolved', p)],
+      ['query:deleted', (p) => onEvent?.('query:deleted', p)],
     ];
     if (subscribeToProgram) {
       handlers.push(

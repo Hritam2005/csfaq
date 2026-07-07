@@ -49,6 +49,11 @@ export const QueryDetailPage: React.FC = () => {
   const [refetchKey, setRefetchKey] = useState(0);
 
   // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+
   const [showHumanModal, setShowHumanModal] = useState(false);
   const [humanReason, setHumanReason] = useState('');
   const [submittingHuman, setSubmittingHuman] = useState(false);
@@ -97,12 +102,46 @@ export const QueryDetailPage: React.FC = () => {
         payload?.id === id
       ) {
         setRefetchKey((k) => k + 1);
-      } else if (event === 'query:updated') {
+      } else if (event === 'query:updated' || event === 'query:deleted') {
         // Fallback: refresh on any update (cheap for one item)
         setRefetchKey((k) => k + 1);
       }
     },
   });
+
+  const handleSaveEdit = async () => {
+    if (!id || !query) return;
+    if (editTitle.trim().length < 5 || editBody.trim().length < 10) {
+      toast.error('Title must be at least 5 characters and body at least 10 characters.');
+      return;
+    }
+    setSubmittingEdit(true);
+    try {
+      await TriageService.updateQuery(id, {
+        title: editTitle.trim(),
+        body: editBody.trim(),
+      });
+      toast.success('Query updated successfully!');
+      setShowEditModal(false);
+      setRefetchKey((k) => k + 1);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to update query.');
+    } finally {
+      setSubmittingEdit(false);
+    }
+  };
+
+  const handleDeleteQuery = async () => {
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to delete this query?')) return;
+    try {
+      await TriageService.deleteQuery(id);
+      toast.success('Query deleted successfully.');
+      navigate('/queries/my');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to delete query.');
+    }
+  };
 
   const handleRequestHuman = async () => {
     if (!id || humanReason.trim().length < 5) {
@@ -159,7 +198,7 @@ export const QueryDetailPage: React.FC = () => {
           {error || 'Query not found.'}
           <div className="mt-4">
             <button
-              onClick={() => navigate('/support/queries')}
+              onClick={() => navigate('/queries/my')}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white"
             >
               Back to My Queries
@@ -185,7 +224,7 @@ export const QueryDetailPage: React.FC = () => {
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center gap-3">
           <Link
-            to="/support/queries"
+            to="/queries/my"
             className="text-sm text-blue-600 hover:underline"
           >
             ← Back to My Queries
@@ -273,6 +312,22 @@ export const QueryDetailPage: React.FC = () => {
 
           {/* Action bar */}
           <div className="mt-6 flex flex-wrap gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
+            <button
+              onClick={() => {
+                setEditTitle(query.title);
+                setEditBody(query.body);
+                setShowEditModal(true);
+              }}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Edit Query
+            </button>
+            <button
+              onClick={handleDeleteQuery}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Delete Query
+            </button>
             {canRequestHuman && (
               <button
                 onClick={() => setShowHumanModal(true)}
@@ -327,6 +382,42 @@ export const QueryDetailPage: React.FC = () => {
           </section>
         )}
       </div>
+
+      {/* Edit modal */}
+      {showEditModal && (
+        <Modal title="Edit Query" onClose={() => setShowEditModal(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-1">
+                Title
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-1">
+                Description / Question
+              </label>
+              <textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={5}
+                className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <ModalActions
+            onCancel={() => setShowEditModal(false)}
+            onConfirm={handleSaveEdit}
+            confirmText="Save Changes"
+            loading={submittingEdit}
+          />
+        </Modal>
+      )}
 
       {/* Human-request modal */}
       {showHumanModal && (

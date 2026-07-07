@@ -33,9 +33,12 @@ const HARD_HUMAN_GATE_RULES = [
   },
   {
     id: 'PRIVILEGED_DATA',
+    // Require personal/possessive context: "my attendance", "my marks", "my payment"
+    // NOT just any mention of those words in an FAQ question.
     check: (queryData) => {
       const text = `${queryData.title} ${queryData.body}`.toLowerCase();
-      return /\b(attendance|marks?|grade|fees?|payment|account.*issue|missing.*data|private)\b/.test(text);
+      return /\b(my|change|update|reset|wrong|missing|incorrect)\b.{0,40}\b(attendance|marks?|grade|fees?|payment|account|balance|data)\b/.test(text)
+        || /\b(attendance|marks?|grade|fees?|payment|account|balance)\b.{0,40}\b(my|change|update|reset|wrong|missing|incorrect|dispute)\b/.test(text);
     },
     reason: DECISION_REASONS.PRIVILEGED_DATA_REQUIRED,
   },
@@ -43,7 +46,7 @@ const HARD_HUMAN_GATE_RULES = [
     id: 'POLICY_APPEAL',
     check: (queryData) => {
       const text = `${queryData.title} ${queryData.body}`.toLowerCase();
-      return /\b(exception|appeal|waive|reconsider|make.*exception)\b/.test(text);
+      return /\b(exception|appeal|waive|reconsider|make an exception|grant exception)\b/.test(text);
     },
     reason: DECISION_REASONS.POLICY_APPEAL,
   },
@@ -168,7 +171,10 @@ export class TriageEngine {
     // Step 3: RAG retrieval for approved knowledge
     const ragResult = await RAGService.retrieve(queryText, programId);
     
-    if (ragResult.confidence >= env.thresholds.minAiConfidence && 
+    // A single high-quality FAQ match (confidence >= minAiConfidence AND commonalityScore >= 0.7)
+    // is sufficient to attempt autonomous AI answer. commonalityScore is now derived
+    // directly from the top document score so it reflects match quality, not count.
+    if (ragResult.confidence >= env.thresholds.minAiConfidence &&
         ragResult.commonalityScore >= 0.7) {
       // High confidence - attempt AI answer with verification
       const verificationResult = await RAGService.verifyAndGenerate(

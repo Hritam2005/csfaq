@@ -57,7 +57,7 @@ export const NewQueryPage: React.FC = () => {
       humanRequested,
       humanRequestReason: humanRequested ? humanRequestReason.trim() : undefined,
       userUrgencyReason: urgencyReason.trim() || undefined,
-      deadlineAt: deadlineAt ? new Date(deadlineAt).toISOString() : null,
+      deadlineAt: deadlineAt ? new Date(deadlineAt).toISOString() : undefined,
       idempotencyKey:
         typeof crypto !== 'undefined' && 'randomUUID' in crypto
           ? crypto.randomUUID()
@@ -68,7 +68,7 @@ export const NewQueryPage: React.FC = () => {
     try {
       const res = await TriageService.submitQuery(payload);
       toast.success('Query submitted! Routing you to the case…');
-      navigate(`/support/queries/${res.queryId}`);
+      navigate(`/queries/${res.queryId}`);
     } catch (e: any) {
       toast.error(
         e?.response?.data?.message ||
@@ -92,7 +92,7 @@ export const NewQueryPage: React.FC = () => {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              onClick={() => navigate('/support/queries')}
+              onClick={() => navigate('/queries/my')}
               className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-blue-700 shadow hover:bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
             >
               View My Queries →

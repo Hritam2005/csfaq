@@ -13,7 +13,8 @@ export type TriageSocketEvent =
   | 'query:assigned'
   | 'query:resolved'
   | 'query:new_human_case'
-  | 'query:human_requested';
+  | 'query:human_requested'
+  | 'query:deleted';
 
 export type TriageSocketHandler = (data: any) => void;
 

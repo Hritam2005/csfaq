@@ -4,7 +4,9 @@ import {
   getMyQueries, 
   getQueryById, 
   requestHuman,
-  closeCase 
+  closeCase,
+  updateQuery,
+  deleteQuery
 } from './Query.controller.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { querySubmissionLimiter } from '../../middlewares/rateLimiter.middleware.js';
@@ -48,5 +50,20 @@ router.post('/:id/request-human', requestHuman);
  * @access  Private (owner)
  */
 router.post('/:id/close', closeCase);
+
+/**
+ * @route   PATCH/PUT /api/v1/queries/:id
+ * @desc    Update a query
+ * @access  Private (owner)
+ */
+router.patch('/:id', updateQuery);
+router.put('/:id', updateQuery);
+
+/**
+ * @route   DELETE /api/v1/queries/:id
+ * @desc    Delete a query
+ * @access  Private (owner)
+ */
+router.delete('/:id', deleteQuery);
 
 export default router;

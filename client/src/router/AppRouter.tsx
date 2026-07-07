@@ -175,7 +175,7 @@ export const appRouter = createBrowserRouter([
       <ErrorBoundary>
         <AuthGate>
           <ProtectedRoute>
-            <MainLayout />
+            <DashboardLayout />
           </ProtectedRoute>
         </AuthGate>
       </ErrorBoundary>
@@ -184,6 +184,24 @@ export const appRouter = createBrowserRouter([
       { index: true, element: <Navigate to="/queries/my" replace /> },
       { path: 'my', element: <MyQueriesPage /> },
       { path: 'new', element: <NewQueryPage /> },
+      { path: ':id', element: <QueryDetailPage /> },
+    ],
+  },
+  {
+    path: '/support/queries',
+    element: (
+      <ErrorBoundary>
+        <AuthGate>
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        </AuthGate>
+      </ErrorBoundary>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/queries/my" replace /> },
+      { path: 'my', element: <Navigate to="/queries/my" replace /> },
+      { path: 'new', element: <Navigate to="/queries/new" replace /> },
       { path: ':id', element: <QueryDetailPage /> },
     ],
   },

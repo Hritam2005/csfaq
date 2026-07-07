@@ -46,6 +46,8 @@ export const RISK_TAGS = {
 export const EVENT_TYPES = {
   // Lifecycle Events
   CREATED: 'query_created',
+  UPDATED: 'query_updated',
+  DELETED: 'query_deleted',
   TRIAGE_STARTED: 'triage_started',
   TRIAGE_COMPLETED: 'triage_completed',
   

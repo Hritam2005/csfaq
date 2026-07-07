@@ -52,8 +52,11 @@ const envVarsSchema = Joi.object()
     
     // Threshold Configuration
     DUPLICATE_SIMILARITY_THRESHOLD: Joi.number().default(0.90),
-    MIN_AI_CONFIDENCE: Joi.number().default(0.85),
-    MEDIUM_AI_CONFIDENCE: Joi.number().default(0.60),
+    // MIN_AI_CONFIDENCE: minimum RAG score for fully-autonomous AI answer.
+    // With the new scorer (base 0, keyword-driven), 0.72 = strong keyword match + published bonus.
+    MIN_AI_CONFIDENCE: Joi.number().default(0.72),
+    // MEDIUM_AI_CONFIDENCE: threshold for human-review-with-draft path.
+    MEDIUM_AI_CONFIDENCE: Joi.number().default(0.45),
   })
   .unknown();
 
