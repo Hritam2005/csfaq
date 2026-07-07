@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Shield, FileText, Database, 
   Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift 
+  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift, Home
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -101,6 +101,13 @@ export const AdminLayout: React.FC = () => {
           </button>
           
           <div className="flex flex-1 justify-end items-center gap-4">
+            <Link 
+              to="/" 
+              className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Back to Home"
+            >
+              <Home className="h-5 w-5" />
+            </Link>
             <NotificationBell />
 
             <div className="flex items-center gap-2 relative group cursor-pointer">
