@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { ENV } from '../../config/env';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import toast from 'react-hot-toast';
@@ -39,8 +38,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // Connect Main Socket
-    const newSocket = io(ENV.API_URL || 'http://localhost:5000', {
+    // Connect Main Socket directly to Node Backend
+    const newSocket = io('http://localhost:5000', {
       auth: { token },
       reconnection: true,
       reconnectionAttempts: 5,
@@ -59,14 +58,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
+      toast.error(`Socket connection error: ${error.message}`);
     });
 
     setSocket(newSocket);
 
     // Connect Admin Namespace if user is Admin
     // In a real app we'd check exactly, but here we just connect if they are admin role
-    if (user?.role === 'Super Admin' || user?.role === 'Admin') {
-      const newAdminSocket = io(`${ENV.API_URL || 'http://localhost:5000'}/admin`, {
+    if (user?.role?.toLowerCase().includes('admin')) {
+      const newAdminSocket = io('http://localhost:5000/admin', {
         auth: { token },
         reconnection: true,
       });

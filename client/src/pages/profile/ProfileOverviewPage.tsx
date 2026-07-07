@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -8,10 +8,12 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { apiClient } from '../../services/axios';
 import { setCredentials } from '../../store/slices/authSlice';
+import { ENV } from '../../config/env';
 
 export const ProfileOverviewPage: React.FC = () => {
   const { user, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(user?.fullName || user?.name || '');
   const [title, setTitle] = useState(user?.profile?.title || '');
   const [bio, setBio] = useState(user?.profile?.bio || '');
@@ -26,9 +28,60 @@ export const ProfileOverviewPage: React.FC = () => {
     onError: () => toast.error('Failed to update profile'),
   });
 
+  const uploadAvatarMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      return apiClient.put('/auth/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    },
+    onSuccess: (res) => {
+      dispatch(setCredentials({ user: res.data.data, token: token! }));
+      toast.success('Profile picture updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to upload profile picture');
+    }
+  });
+
+  const deleteAvatarMutation = useMutation({
+    mutationFn: () => apiClient.delete('/auth/avatar'),
+    onSuccess: (res) => {
+      dispatch(setCredentials({ user: res.data.data, token: token! }));
+      toast.success('Profile picture removed');
+    },
+    onError: () => {
+      toast.error('Failed to remove profile picture');
+    }
+  });
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate({ name, profile: { title, bio } });
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be under 5MB');
+        return;
+      }
+      uploadAvatarMutation.mutate(file);
+    }
+  };
+
+  const handleRemoveClick = () => {
+    if (confirm('Are you sure you want to remove your profile picture?')) {
+      deleteAvatarMutation.mutate();
+    }
   };
 
   if (!user) return null;
@@ -39,14 +92,42 @@ export const ProfileOverviewPage: React.FC = () => {
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/50">
         <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">Profile Picture</h3>
         <div className="flex items-center gap-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-700 dark:bg-primary-900/50 dark:text-primary-400">
-            {(user?.fullName || user?.name || 'U').charAt(0).toUpperCase()}
-          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          {user?.avatar ? (
+            <img 
+              src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
+              alt="Avatar"
+              className="h-20 w-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+            />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-700 dark:bg-primary-900/50 dark:text-primary-400">
+              {(user?.fullName || user?.name || 'U').charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleUploadClick}
+              isLoading={uploadAvatarMutation.isPending}
+            >
               <Upload className="h-4 w-4" /> Upload new
             </Button>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+              onClick={handleRemoveClick}
+              isLoading={deleteAvatarMutation.isPending}
+              disabled={!user?.avatar}
+            >
               <Trash2 className="h-4 w-4" /> Remove
             </Button>
           </div>

@@ -1,0 +1,57 @@
+﻿On branch sulagna
+Your branch is up to date with 'origin/sulagna'.
+
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)
+
+Changes to be committed:
+	new file:   LICENSE
+	new file:   README.md
+	new file:   ai-engine/.gitignore
+	new file:   ai-engine/chunks.json
+	new file:   ai-engine/docs/KB.pdf
+	new file:   ai-engine/faiss_index.bin
+	new file:   ai-engine/ingest.py
+	new file:   ai-engine/main.py
+	new file:   ai-engine/requirements.txt
+	new file:   client/dist/assets/index-0yiIuqiz.css
+	deleted:    client/dist/assets/index-C_MiokCJ.js
+	new file:   client/dist/assets/index-nlZX4hOa.js
+	modified:   client/dist/index.html
+	modified:   client/node_modules/.vite/deps/_metadata.json
+	modified:   client/node_modules/.vite/deps/recharts.js
+	modified:   client/src/components/providers/SocketProvider.tsx
+	modified:   client/src/hooks/ai/useChat.ts
+	modified:   client/src/layouts/dashboard/DashboardLayout.tsx
+	modified:   client/src/pages/knowledge/CategoriesPage.tsx
+	modified:   client/src/pages/knowledge/FAQDetailsPage.tsx
+	modified:   client/src/pages/knowledge/FAQPage.tsx
+	new file:   client/src/services/faqService.ts
+	modified:   client/tsconfig.tsbuildinfo
+	modified:   client/vite.config.ts
+	new file:   server/dns-test.js
+	modified:   server/package-lock.json
+	modified:   server/package.json
+	modified:   server/seed_admin.js
+	modified:   server/server.js
+	modified:   server/src/config/db.js
+	modified:   server/src/config/socket.js
+	new file:   server/src/controllers/faq.controller.js
+	modified:   server/src/middlewares/rateLimiter.middleware.js
+	modified:   server/src/models/FAQ.js
+	modified:   server/src/modules/ai/orchestrator/AIOrchestrator.js
+	modified:   server/src/repositories/faq.repository.js
+	new file:   server/src/routes/faq.routes.js
+	modified:   server/src/routes/index.js
+	new file:   server/src/scripts/seedFaqs.js
+	new file:   server/src/scripts/seedFaqsInternal.js
+	modified:   server/src/utils/jwt.util.js
+	new file:   server/src/utils/seedAdmin.js
+	new file:   server/test_db.cjs
+	new file:   server/test_local_db.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	status-utf8.txt
+	status.txt
+

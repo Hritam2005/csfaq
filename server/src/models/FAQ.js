@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 import { APPROVAL_STATUS, VISIBILITY, DIFFICULTY } from '../constants/knowledge.constants.js';
+import './Tag.js';
+import './Category.js';
+
 
 const faqSchema = new mongoose.Schema(
   {
@@ -98,11 +101,6 @@ const faqSchema = new mongoose.Schema(
       enum: Object.values(VISIBILITY),
       default: VISIBILITY.PUBLIC,
       index: true,
-    },
-    sourceDocument: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'KnowledgeDocument', // Link to the original document if extracted by AI
-      default: null,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

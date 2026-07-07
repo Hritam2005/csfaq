@@ -26,17 +26,67 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
 
+  const passwordValue = watch('password') || '';
+
+  const calculateStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return 0;
+    if (pass.length >= 6) score += 1;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+    return score;
+  };
+
+  const strengthScore = calculateStrength(passwordValue);
+
+  const getStrengthLabel = (score: number) => {
+    if (score === 0) return '';
+    if (score <= 2) return 'Weak';
+    if (score <= 4) return 'Medium';
+    return 'Strong';
+  };
+
+  const getStrengthColor = (score: number) => {
+    if (score === 0) return 'bg-gray-200 dark:bg-gray-700';
+    if (score <= 2) return 'bg-red-500';
+    if (score <= 4) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const getStrengthTextClass = (score: number) => {
+    if (score === 0) return 'text-gray-500';
+    if (score <= 2) return 'text-red-500';
+    if (score <= 4) return 'text-yellow-500';
+    return 'text-green-500';
+  };
+
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) => AuthService.login(data.email, data.password),
+    mutationFn: (data: LoginForm) => AuthService.login(data.email, data.password, loginType),
     onSuccess: (res) => {
+      const role = res.data.user.role?.toLowerCase() || '';
+      const isAdmin = role.includes('admin');
+
+      // Frontend validation check
+      if (loginType === 'admin' && !isAdmin) {
+        AuthService.logout().catch(() => {});
+        toast.error('Access denied. Admin credentials required.');
+        return;
+      }
+      if (loginType === 'user' && isAdmin) {
+        AuthService.logout().catch(() => {});
+        toast.error('Please use the Admin Sign In portal.');
+        return;
+      }
+
       dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
       toast.success('Successfully logged in');
-      const role = res.data.user.role?.toLowerCase() || '';
-      if (role.includes('admin')) {
+      if (isAdmin) {
         navigate('/admin/dashboard', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
@@ -63,10 +113,22 @@ export const LoginPage: React.FC = () => {
     
     // Create a temporary mutation to handle this
     toast.promise(
-      AuthService.googleLogin(email, name).then((res) => {
-        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+      AuthService.googleLogin(email, name, loginType).then((res) => {
         const role = res.data.user.role?.toLowerCase() || '';
-        if (role.includes('admin')) {
+        const isAdmin = role.includes('admin');
+
+        // Frontend validation check
+        if (loginType === 'admin' && !isAdmin) {
+          AuthService.logout().catch(() => {});
+          throw new Error('Access denied. Admin credentials required.');
+        }
+        if (loginType === 'user' && isAdmin) {
+          AuthService.logout().catch(() => {});
+          throw new Error('Please use the Admin Sign In portal.');
+        }
+
+        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+        if (isAdmin) {
           navigate('/admin/dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });
@@ -145,6 +207,21 @@ export const LoginPage: React.FC = () => {
             </button>
           </div>
           {errors.password && <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">{errors.password.message}</p>}
+          {passwordValue && (
+            <div className="mt-2">
+              <div className="flex justify-between items-center mb-1 text-xs">
+                <span className="text-gray-500 dark:text-gray-400">Password strength</span>
+                <span className={`font-medium ${getStrengthTextClass(strengthScore)}`}>{getStrengthLabel(strengthScore)}</span>
+              </div>
+              <div className="flex gap-1 h-1.5 w-full rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+                <div className={`h-full ${strengthScore >= 1 ? getStrengthColor(strengthScore) : 'bg-transparent'} transition-all w-1/5`}></div>
+                <div className={`h-full ${strengthScore >= 2 ? getStrengthColor(strengthScore) : 'bg-transparent'} transition-all w-1/5`}></div>
+                <div className={`h-full ${strengthScore >= 3 ? getStrengthColor(strengthScore) : 'bg-transparent'} transition-all w-1/5`}></div>
+                <div className={`h-full ${strengthScore >= 4 ? getStrengthColor(strengthScore) : 'bg-transparent'} transition-all w-1/5`}></div>
+                <div className={`h-full ${strengthScore >= 5 ? getStrengthColor(strengthScore) : 'bg-transparent'} transition-all w-1/5`}></div>
+              </div>
+            </div>
+          )}
         </div>
 
         <Button type="submit" className="w-full" isLoading={loginMutation.isPending}>

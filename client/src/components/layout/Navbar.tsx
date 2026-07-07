@@ -8,6 +8,7 @@ import { RootState } from '../../store/store';
 import { setTheme } from '../../store/slices/themeSlice';
 import { logout } from '../../store/slices/authSlice';
 import { AuthService } from '../../services/AuthService';
+import { ENV } from '../../config/env';
 
 export const Navbar: React.FC = () => {
   const dispatch = useDispatch();
@@ -58,8 +59,10 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex gap-6">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Home</Link>
             <Link to="/faqs" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">FAQs</Link>
-            <Link to="/support" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Support (Unknown Questions)</Link>
-            <a href="/#timeline" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Timeline</a>
+            {!(isAuthenticated && user?.role?.toLowerCase().includes('admin')) && (
+              <Link to="/support" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Support (Unknown Questions)</Link>
+            )}
+            <a href="https://samagama.in" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Samagama</a>
           </div>
         </div>
 
@@ -75,9 +78,17 @@ export const Navbar: React.FC = () => {
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors overflow-hidden"
             >
-              <UserCircle className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
+                  alt="User Avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UserCircle className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              )}
             </button>
 
             {dropdownOpen && (
@@ -88,7 +99,7 @@ export const Navbar: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     </div>
-                    {user?.role === 'Admin' || user?.role === 'Super Admin' ? (
+                    {user?.role?.toLowerCase().includes('admin') ? (
                       <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Admin Dashboard</Link>
                     ) : (
                       <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>User Dashboard</Link>

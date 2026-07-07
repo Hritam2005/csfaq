@@ -11,6 +11,7 @@ export interface ActivityFeedItem {
   _id: string;
   type: 'search' | 'document_read' | 'conversation' | 'bookmark' | 'download' | 'upload';
   title: string;
+  description?: string;
   timestamp: string;
   metadata?: any;
 }
@@ -21,6 +22,13 @@ export interface Recommendation {
   title: string;
   relevanceScore: number;
   summary: string;
+}
+
+export interface SamagamaPointsSync {
+  email: string;
+  points: number;
+  source: 'samagama';
+  syncedAt: string;
 }
 
 export class DashboardService {
@@ -51,6 +59,31 @@ export class DashboardService {
 
   static async getUploads() {
     const res = await apiClient.get('/dashboard/uploads');
+    return res.data;
+  }
+
+  static async syncSamagamaPoints(email: string, password: string) {
+    const res = await apiClient.post('/samagama/spurti-points/sync', { email, password });
+    return res.data.data as SamagamaPointsSync;
+  }
+
+  static async getUserRedemptions() {
+    const res = await apiClient.get('/samagama/redemptions');
+    return res.data.data as any[];
+  }
+
+  static async createUserRedemption(title: string, cost: number, code: string) {
+    const res = await apiClient.post('/samagama/redemptions', { title, cost, code });
+    return res.data.data;
+  }
+
+  static async markRedemptionUsed(id: string) {
+    const res = await apiClient.patch(`/samagama/redemptions/${id}/use`);
+    return res.data.data;
+  }
+
+  static async resetSpurtiPoints() {
+    const res = await apiClient.post('/samagama/spurti-points/reset');
     return res.data;
   }
 }

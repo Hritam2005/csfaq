@@ -1,0 +1,2 @@
+{"level":"info","message":"Attempting to connect to MongoDB Atlas...","timestamp":"2026-07-06 22:04:14"}
+{"level":"info","message":"✅ MongoDB Connected to Atlas: ac-d8ollc8-shard-00-01.vq4q2gt.mongodb.net","timestamp":"2026-07-06 22:04:14"}
