@@ -11,12 +11,12 @@ interface StatCardProps {
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, trendUp }) => {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-500/40 dark:border-gray-800/80 dark:from-gray-900/90 dark:via-gray-900/60 dark:to-gray-950/90 dark:hover:border-cyan-400/40">
+    <div className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-5 sm:p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-500/40 dark:border-gray-800/80 dark:from-gray-900/90 dark:via-gray-900/60 dark:to-gray-950/90 dark:hover:border-cyan-400/40">
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-transparent dark:from-cyan-500/15 dark:via-blue-500/10 blur-xl pointer-events-none transition-all group-hover:scale-150 duration-500" />
       
-      <div className="flex items-center justify-between relative z-10">
-        <p className="text-sm font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase">{title}</p>
-        <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100/60 p-2.5 text-blue-700 shadow-sm ring-1 ring-blue-500/20 transition-transform duration-300 group-hover:scale-110 dark:from-cyan-950/80 dark:to-blue-950/50 dark:text-cyan-300 dark:ring-cyan-400/30">
+      <div className="flex items-start justify-between gap-2 relative z-10">
+        <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase min-w-0">{title}</p>
+        <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100/60 p-2.5 text-blue-700 shadow-sm ring-1 ring-blue-500/20 transition-transform duration-300 group-hover:scale-110 dark:from-cyan-950/80 dark:to-blue-950/50 dark:text-cyan-300 dark:ring-cyan-400/30 shrink-0">
           {icon}
         </div>
       </div>

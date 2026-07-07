@@ -150,12 +150,14 @@ export const FAQPage: React.FC = () => {
         
         <div className="container relative mx-auto px-4 max-w-4xl text-center">
           {decodedCategory && (
-            <Link 
-              to={isDashboard ? '/app/collections' : '/categories'} 
-              className="mb-4 inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-cyan-400"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Back to Categories
-            </Link>
+            <div className="mb-6">
+              <Link 
+                to={isDashboard ? '/app/collections' : '/categories'} 
+                className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-cyan-400"
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" /> Back to Categories
+              </Link>
+            </div>
           )}
 
           <motion.span 
