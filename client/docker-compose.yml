@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: knowledge_hub_client
+    restart: unless-stopped
+    ports:
+      # Expose both 5173 (Vite default) and 3000 just in case
+      - "5173:5173"
+      - "3000:3000"
+    environment:
+      # Tell the React app where to find the API server
+      - VITE_API_URL=http://localhost:5000/api/v1
+      - VITE_PROXY_TARGET=http://host.docker.internal:5000
+    networks:
+      - knowledge_net
+
+networks:
+  knowledge_net:
+    driver: bridge

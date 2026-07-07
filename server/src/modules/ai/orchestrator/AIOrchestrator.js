@@ -149,14 +149,25 @@ export class AIOrchestrator {
 
     let fullContent = '';
     try {
-      const response = await fetch('http://localhost:8000/api/chat/stream', {
+      let aiEngineUrl = process.env.AI_ENGINE_URL || 'http://localhost:8000';
+      let response;
+      const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: cleanPrompt,
-          history: history
-        })
-      });
+        body: JSON.stringify({ prompt: cleanPrompt, history: history })
+      };
+
+      try {
+        response = await fetch(`${aiEngineUrl}/api/chat/stream`, requestOptions);
+      } catch (err) {
+        // Fallback failsafe: if connection fails, try the alternative network (Docker vs Local)
+        const fallbackUrl = aiEngineUrl.includes('host.docker.internal') 
+            ? aiEngineUrl.replace('host.docker.internal', 'localhost')
+            : aiEngineUrl.replace('localhost', 'host.docker.internal');
+            
+        console.warn(`[Failsafe] AI Engine connection failed at ${aiEngineUrl}. Retrying with ${fallbackUrl}...`);
+        response = await fetch(`${fallbackUrl}/api/chat/stream`, requestOptions);
+      }
 
       if (!response.ok) {
         throw new Error(`AI Engine returned status ${response.status}`);
