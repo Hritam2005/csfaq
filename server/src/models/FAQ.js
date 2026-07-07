@@ -102,11 +102,6 @@ const faqSchema = new mongoose.Schema(
       default: VISIBILITY.PUBLIC,
       index: true,
     },
-    sourceDocument: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'KnowledgeDocument', // Link to the original document if extracted by AI
-      default: null,
-    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

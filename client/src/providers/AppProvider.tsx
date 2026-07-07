@@ -5,18 +5,22 @@ import { ThemeProvider } from './ThemeProvider';
 import { ToastProvider } from './ToastProvider';
 
 import { SocketProvider } from '../components/providers/SocketProvider';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ENV } from '../config/env';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <ReduxProvider>
-      <QueryProvider>
-        <ThemeProvider>
-          <SocketProvider>
-            {children}
-            <ToastProvider />
-          </SocketProvider>
-        </ThemeProvider>
-      </QueryProvider>
-    </ReduxProvider>
+    <GoogleOAuthProvider clientId={ENV.GOOGLE_CLIENT_ID}>
+      <ReduxProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <SocketProvider>
+              {children}
+              <ToastProvider />
+            </SocketProvider>
+          </ThemeProvider>
+        </QueryProvider>
+      </ReduxProvider>
+    </GoogleOAuthProvider>
   );
 };

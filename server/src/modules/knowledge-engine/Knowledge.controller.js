@@ -2,10 +2,6 @@ import asyncHandler from '../../utils/asyncHandler.js';
 import { KnowledgeService } from './Knowledge.service.js';
 import ApiResponse from '../../utils/ApiResponse.js';
 
-export const reindexDocument = asyncHandler(async (req, res) => {
-  const result = await KnowledgeService.reindexDocument(req.params.id);
-  res.status(200).json(ApiResponse.success(result, 'Reindexing triggered'));
-});
 
 export const getStatistics = asyncHandler(async (req, res) => {
   const stats = await KnowledgeService.getStatistics();
@@ -17,10 +13,6 @@ export const clearCache = asyncHandler(async (req, res) => {
   res.status(200).json(ApiResponse.success(result, 'Cache cleared'));
 });
 
-export const getCitation = asyncHandler(async (req, res) => {
-  const citation = await KnowledgeService.getCitation(req.params.chunkId);
-  res.status(200).json(ApiResponse.success(citation, 'Citation generated'));
-});
 
 export const getConfidence = asyncHandler(async (req, res) => {
   // Utility endpoint to test confidence scoring

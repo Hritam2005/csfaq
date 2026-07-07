@@ -11,7 +11,7 @@ export const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isAdmin) {
       return <Navigate to="/admin/dashboard" replace />;
     }
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

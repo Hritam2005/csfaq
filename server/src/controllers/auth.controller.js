@@ -1,7 +1,10 @@
 import asyncHandler from '../utils/asyncHandler.js';
+import fs from 'fs';
+import path from 'path';
 import AuthService from '../services/auth.service.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import Role from '../models/Role.js';
+import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { env } from '../config/env.js';
 
@@ -80,7 +83,9 @@ export const login = asyncHandler(async (req, res) => {
     username: user.username,
     email: user.email,
     avatar: user.avatar,
+    profile: user.profile || { title: '', bio: '' },
     role: user.role?.name || 'Registered User',
+    permissions: user.role?.permissions?.map(p => p.name || p) || [],
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };
@@ -89,21 +94,22 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const googleLogin = asyncHandler(async (req, res) => {
-  const { email, name, deviceId, deviceName, browser, os, loginType } = req.body;
+  const { token, credential, email, name, deviceId, deviceName, browser, os, loginType, action } = req.body;
   const ipAddress = req.ip;
+
+  if (loginType === 'admin') {
+    throw ApiError.forbidden('Google authentication is disabled for Admin accounts. Please use email and password to sign in to the Admin portal.');
+  }
 
   const deviceInfo = { deviceId, deviceName, browser, os };
   
-  const { user, tokens } = await AuthService.googleLogin(email, name, deviceInfo, ipAddress);
+  const { user, tokens } = await AuthService.googleLogin(token || credential, email, name, deviceInfo, ipAddress, action);
 
   const roleName = user.role?.name?.toLowerCase() || '';
   const isAdmin = roleName.includes('admin');
   
-  if (loginType === 'admin' && !isAdmin) {
-    throw ApiError.forbidden('Access denied. Admin credentials required.');
-  }
-  if (loginType === 'user' && isAdmin) {
-    throw ApiError.forbidden('Please use the Admin Sign In portal.');
+  if (isAdmin) {
+    throw ApiError.forbidden('Google authentication is disabled for Admin accounts. Please use email and password to sign in to the Admin portal.');
   }
 
   res.cookie('accessToken', tokens.accessToken, cookieOptions);
@@ -116,7 +122,9 @@ export const googleLogin = asyncHandler(async (req, res) => {
     username: user.username,
     email: user.email,
     avatar: user.avatar,
-    role: user.role ? user.role.name : 'Registered User',
+    profile: user.profile || { title: '', bio: '' },
+    role: user.role?.name || 'Registered User',
+    permissions: user.role?.permissions?.map(p => p.name || p) || [],
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };
@@ -162,10 +170,44 @@ export const getProfile = asyncHandler(async (req, res) => {
     username: req.user.username,
     email: req.user.email,
     avatar: req.user.avatar,
+    profile: req.user.profile || { title: '', bio: '' },
     role: req.user.role?.name || 'Registered User',
     permissions: req.userPermissions,
     spurtiPoints: req.user.spurtiPoints || 0,
     spurtiPointsSyncedAt: req.user.spurtiPointsSyncedAt || null,
   };
   res.status(200).json(ApiResponse.success(userData, 'Profile retrieved'));
+});
+
+export const dropOutInternship = asyncHandler(async (req, res) => {
+  if (req.user) {
+    req.user.isDeleted = true;
+    req.user.deletedAt = new Date();
+    await req.user.save();
+  }
+
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+
+  res.status(200).json(ApiResponse.success(null, 'Successfully dropped out from internship. Account deleted.'));
+});
+
+export const updatePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = req.user;
+
+  const userWithPassword = await User.findById(user._id).select('+password');
+  if (!userWithPassword) {
+    throw ApiError.notFound('User not found');
+  }
+
+  const isMatch = await userWithPassword.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw ApiError.unauthorized('Incorrect current password');
+  }
+
+  userWithPassword.password = newPassword;
+  await userWithPassword.save();
+
+  res.status(200).json(ApiResponse.success(null, 'Password updated successfully'));
 });

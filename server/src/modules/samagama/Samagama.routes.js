@@ -6,6 +6,7 @@ import {
   createRedemption,
   getMyRedemptions,
   useRedemption,
+  resetSpurtiPoints,
 } from './Samagama.controller.js';
 
 const router = Router();
@@ -14,6 +15,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/spurti-points/sync', authLimiter, syncSpurtiPoints);
+router.post('/spurti-points/reset', resetSpurtiPoints);
 router.post('/redemptions', createRedemption);
 router.get('/redemptions', getMyRedemptions);
 router.patch('/redemptions/:id/use', useRedemption);

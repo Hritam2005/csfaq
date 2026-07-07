@@ -14,9 +14,19 @@ export const syncSpurtiPoints = asyncHandler(async (req, res) => {
   const points = await SamagamaService.getSpurtiPoints(email, password);
 
   if (req.user) {
-    req.user.spurtiPoints = points.points;
+    // Find all unused redemptions for this user
+    const unusedRedemptions = await Redemption.find({ user: req.user._id, used: false });
+    const unusedCost = unusedRedemptions.reduce((total, r) => total + r.cost, 0);
+
+    // Subtract unused cost from synced points
+    const netPoints = Math.max(0, points.points - unusedCost);
+
+    req.user.spurtiPoints = netPoints;
     req.user.spurtiPointsSyncedAt = points.syncedAt;
     await req.user.save();
+
+    // Align returned points with the net balance
+    points.points = netPoints;
   }
 
   res.status(200).json(ApiResponse.success(points, 'Samagama Spurti points synced'));
@@ -67,4 +77,16 @@ export const useRedemption = asyncHandler(async (req, res) => {
   await redemption.save();
 
   res.status(200).json(ApiResponse.success(redemption, 'Voucher marked as used'));
+});
+
+export const resetSpurtiPoints = asyncHandler(async (req, res) => {
+  if (req.user) {
+    req.user.spurtiPoints = 0;
+    req.user.spurtiPointsSyncedAt = new Date();
+    await req.user.save();
+  }
+
+  await Redemption.deleteMany({ user: req.user._id });
+
+  res.status(200).json(ApiResponse.success(null, 'Samagama Spurti points reset to 0'));
 });

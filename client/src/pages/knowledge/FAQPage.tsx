@@ -92,13 +92,17 @@ export const FAQPage: React.FC = () => {
   return (
     <div className="w-full min-h-screen bg-gray-50/50 dark:bg-gray-950/20 pb-20">
       {/* Search Header Banner */}
-      <section className="relative overflow-hidden bg-white dark:bg-background border-b border-gray-150 dark:border-gray-800 py-16">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:opacity-10" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-blue-50/30 to-white dark:from-gray-950 dark:via-blue-950/30 dark:to-background border-b border-gray-150 dark:border-gray-800 py-16">
+        {/* Abstract Background Ambient Gradients (Zero JS / Zero Resource Load) */}
+        <div className="absolute top-0 left-1/4 -translate-x-1/2 w-[650px] h-[350px] bg-gradient-to-br from-blue-600/20 via-indigo-500/15 to-transparent dark:from-cyan-500/20 dark:via-blue-600/20 dark:to-transparent blur-[130px] rounded-full pointer-events-none -z-10 animate-pulse" />
+        <div className="absolute top-10 right-1/4 w-[450px] h-[450px] bg-gradient-to-tl from-emerald-500/15 via-teal-500/10 to-transparent dark:from-emerald-400/15 dark:via-cyan-500/15 dark:to-transparent blur-[110px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:opacity-10 pointer-events-none" />
+        
         <div className="container relative mx-auto px-4 max-w-4xl text-center">
           {decodedCategory && (
             <Link 
               to={isDashboard ? '/app/collections' : '/categories'} 
-              className="mb-4 inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary-600 dark:text-gray-400"
+              className="mb-4 inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-cyan-400"
             >
               <ChevronLeft className="mr-1 h-4 w-4" /> Back to Categories
             </Link>
@@ -107,18 +111,20 @@ export const FAQPage: React.FC = () => {
           <motion.span 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-block px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/30 text-xs font-semibold text-primary-600 dark:text-primary-400 mb-4"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-bold text-blue-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 mb-4 shadow-sm backdrop-blur-md"
           >
-            Vicharanashala Help Desk
+            ✨ Vicharanashala Help Desk & Collective Wisdom
           </motion.span>
           
           <motion.h1 
             initial={{ opacity: 0, y: -15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-white mb-4"
+            className="text-4xl font-black tracking-tight text-gray-900 sm:text-5xl dark:text-white mb-4"
           >
-            {decodedCategory ? `${decodedCategory} FAQs` : 'Frequently Asked Questions'}
+            {decodedCategory ? `${decodedCategory} FAQs` : (
+              <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600 dark:from-cyan-400 dark:via-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">Frequently Asked Questions</span>
+            )}
           </motion.h1>
           
           <motion.p 
@@ -225,10 +231,10 @@ export const FAQPage: React.FC = () => {
                     <motion.div
                       layout
                       key={faq._id}
-                      className={`overflow-hidden rounded-2xl border transition-all ${
+                      className={`group overflow-hidden rounded-2xl border transition-all duration-300 backdrop-blur-xl ${
                         isOpen
-                          ? 'border-primary-500/50 bg-white dark:bg-background shadow-md shadow-primary-500/5'
-                          : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900/40 dark:hover:border-gray-700'
+                          ? 'border-blue-500/50 dark:border-cyan-400/50 bg-gradient-to-br from-white via-blue-50/20 to-white dark:from-gray-900 dark:via-cyan-950/20 dark:to-gray-900 shadow-lg shadow-blue-500/10 dark:shadow-cyan-500/10 -translate-y-0.5'
+                          : 'border-gray-200/80 bg-white/80 hover:border-blue-400/40 hover:shadow-md hover:-translate-y-0.5 dark:border-gray-800/80 dark:bg-gray-900/60 dark:hover:border-cyan-500/40'
                       }`}
                     >
                       <button

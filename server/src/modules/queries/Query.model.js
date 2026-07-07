@@ -25,6 +25,11 @@ const QuerySchema = new mongoose.Schema(
     resolvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    },
+    priority: {
+      type: String,
+      enum: ['Low', 'Medium', 'High'],
+      default: 'Low',
     }
   },
   { timestamps: true }

@@ -7,10 +7,13 @@ import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 
+import { Eye, EyeOff } from 'lucide-react';
+
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { AuthService } from '../../services/AuthService';
 import { setCredentials } from '../../store/slices/authSlice';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,7 +22,7 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/,
       'Strong password recommended: Include uppercase, lowercase, number, and special character'
     ),
   confirmPassword: z.string()
@@ -33,8 +36,10 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>({
+  const { register, handleSubmit, watch, getValues, setError, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
 
@@ -94,27 +99,45 @@ export const RegisterPage: React.FC = () => {
     registerMutation.mutate(data);
   };
 
-  const handleGoogleLogin = () => {
-    const email = prompt("Google Sign-In Mock\n\nPlease enter a Google Email address:");
-    if (!email) return;
-    const name = email.split('@')[0];
-    
-    toast.promise(
-      AuthService.googleLogin(email, name).then((res) => {
-        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
-        const role = res.data.user.role?.toLowerCase() || '';
-        if (role.includes('admin')) {
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const customName = getValues('name');
+      toast.promise(
+        AuthService.googleLogin(tokenResponse.access_token, undefined, 'register', customName).then((res) => {
+          dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+          const role = res.data.user.role?.toLowerCase() || '';
+          if (role.includes('admin')) {
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }).catch((err: any) => {
+          const msg = err.response?.data?.message || err.message || '';
+          if (err.response?.status === 400 || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('sign in instead')) {
+            setTimeout(() => {
+              navigate('/login');
+            }, 2000);
+          }
+          throw err;
+        }),
+        {
+          loading: 'Authenticating with Google...',
+          success: 'Successfully registered and logged in with Google!',
+          error: (err: any) => err.response?.data?.message || err.message || 'Failed to authenticate with Google'
         }
-      }),
-      {
-        loading: 'Authenticating with Google...',
-        success: 'Successfully registered and logged in with Google!',
-        error: (err) => err.response?.data?.message || 'Failed to authenticate with Google'
-      }
-    );
+      );
+    },
+    onError: () => toast.error('Google Sign-In failed or was canceled'),
+  });
+
+  const handleGoogleSignUp = () => {
+    const customName = getValues('name');
+    if (!customName || customName.trim().length < 2) {
+      toast.error('Please enter your desired Full Name above before continuing with Google!');
+      setError('name', { type: 'manual', message: 'Please enter your Full Name so we can set it as your main profile name' });
+      return;
+    }
+    loginWithGoogle();
   };
 
   return (
@@ -138,19 +161,34 @@ export const RegisterPage: React.FC = () => {
         <Input
           label="Email"
           type="email"
-          placeholder="jane.doe@example.com"
+          placeholder="jane@organization.com"
           {...register('email')}
           error={errors.email?.message}
         />
 
         <div>
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            {...register('password')}
-            error={errors.password?.message}
-          />
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700 ${
+                errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {errors.password && <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">{errors.password.message}</p>}
           {passwordValue && (
             <div className="mt-2">
               <div className="flex justify-between items-center mb-1 text-xs">
@@ -168,13 +206,30 @@ export const RegisterPage: React.FC = () => {
           )}
         </div>
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="••••••••"
-          {...register('confirmPassword')}
-          error={errors.confirmPassword?.message}
-        />
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+          </div>
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-700 ${
+                errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
+              {...register('confirmPassword')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              title={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {errors.confirmPassword && <p className="mt-1 text-sm font-medium text-red-500 dark:text-red-400">{errors.confirmPassword.message}</p>}
+        </div>
 
         <Button type="submit" className="w-full" isLoading={registerMutation.isPending}>
           Create Account
@@ -188,7 +243,7 @@ export const RegisterPage: React.FC = () => {
       </div>
 
       <div className="mt-6">
-        <Button variant="outline" className="w-full flex items-center justify-center gap-2" onClick={handleGoogleLogin}>
+        <Button variant="outline" type="button" className="w-full flex items-center justify-center gap-2" onClick={handleGoogleSignUp}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

@@ -7,7 +7,8 @@ import { Button } from '../../components/ui/Button';
 import { RootState } from '../../store/store';
 import { useActivityFeed, useDashboardMetrics } from '../../hooks/dashboard/useDashboard';
 import { DashboardService, SamagamaPointsSync } from '../../services/dashboard/DashboardService';
-import { updateUserPoints } from '../../store/slices/authSlice';
+import { updateUserPoints, logout } from '../../store/slices/authSlice';
+import { AuthService } from '../../services/AuthService';
 
 interface Reward {
   id: string;
@@ -166,7 +167,9 @@ export const SpurtiPointsPage: React.FC = () => {
     ? user.spurtiPoints
     : earnedPoints;
   const spentPoints = redemptions.reduce((total, redemption) => total + redemption.cost, 0);
-  const balance = Math.max(sourcePoints - spentPoints, 0);
+  const balance = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
+    ? user.spurtiPoints
+    : Math.max(sourcePoints - spentPoints, 0);
   const nextReward = rewards.find((reward) => reward.cost > balance);
   const progressTarget = nextReward?.cost || rewards[rewards.length - 1].cost;
   const progress = Math.min(Math.round((balance / progressTarget) * 100), 100);
@@ -189,6 +192,14 @@ export const SpurtiPointsPage: React.FC = () => {
       const updatedRedemptions = [newRedemption, ...redemptions];
       setRedemptions(updatedRedemptions);
       localStorage.setItem(storageKey, JSON.stringify(updatedRedemptions));
+
+      if (user && user.spurtiPoints !== undefined && user.spurtiPoints !== null) {
+        dispatch(updateUserPoints({
+          points: Math.max(0, user.spurtiPoints - reward.cost),
+          syncedAt: user.spurtiPointsSyncedAt
+        }));
+      }
+
       toast.success(`${reward.title} redeemed`);
     } catch (err) {
       toast.error('Failed to redeem reward on the server.');
@@ -226,13 +237,43 @@ export const SpurtiPointsPage: React.FC = () => {
       const sync = await DashboardService.syncSamagamaPoints(samagamaEmail, samagamaPassword);
       setSamagamaSync(sync);
       localStorage.setItem(syncStorageKey, JSON.stringify(sync));
-      dispatch(updateUserPoints(sync.points));
+      dispatch(updateUserPoints({ points: sync.points, syncedAt: sync.syncedAt }));
       setSamagamaPassword('');
       toast.success('Samagama Spurti points synced');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Unable to sync Samagama points');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleResetPoints = async () => {
+    if (!window.confirm("Are you sure you want to reset your Spurti points to 0? This will also clear your redemption history. This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await DashboardService.resetSpurtiPoints();
+      dispatch(updateUserPoints({ points: 0, syncedAt: new Date().toISOString() }));
+      setRedemptions([]);
+      localStorage.removeItem(storageKey);
+      toast.success("Spurti points reset to 0");
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to reset points");
+    }
+  };
+
+  const handleDropoutInternship = async () => {
+    if (!window.confirm("CRITICAL WARNING: Are you sure you want to drop out from the internship? This will permanently delete your account and log you out immediately. This action is irreversible!")) {
+      return;
+    }
+    try {
+      await AuthService.dropOutInternship();
+      toast.success("Successfully dropped out. Logging out...");
+      setTimeout(() => {
+        dispatch(logout());
+      }, 1500);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to drop out from internship");
     }
   };
 
@@ -420,6 +461,30 @@ export const SpurtiPointsPage: React.FC = () => {
         ) : (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Redeemed perks will appear here.</p>
         )}
+      </div>
+
+      {/* Danger Zone */}
+      <div className="rounded-xl border border-red-200 bg-red-50/50 p-6 shadow-sm dark:border-red-900/30 dark:bg-red-950/10">
+        <h2 className="text-lg font-bold text-red-900 dark:text-red-400">Danger Zone</h2>
+        <p className="mt-2 text-sm text-red-700 dark:text-red-400/80">
+          Be careful. These actions are irreversible and will affect your session and/or points balance.
+        </p>
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-700 hover:bg-red-100 hover:text-red-900 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/50"
+            onClick={handleResetPoints}
+          >
+            Reset Spurti Points to 0
+          </Button>
+          <Button
+            variant="default"
+            className="bg-red-600 hover:bg-red-700 text-white border-none"
+            onClick={handleDropoutInternship}
+          >
+            Drop Out from Internship
+          </Button>
+        </div>
       </div>
     </div>
   );

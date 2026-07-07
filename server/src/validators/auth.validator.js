@@ -6,7 +6,7 @@ export const registerValidation = [
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d])/)
     .withMessage('Password must contain at least one uppercase, one lowercase, one number, and one special character'),
 ];
 
@@ -21,6 +21,11 @@ export const refreshValidation = [
 ];
 
 export const googleLoginValidation = [
-  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+  body().custom((val) => {
+    if (!val.token && !val.credential && !val.email) {
+      throw new Error('Please provide a Google OAuth token');
+    }
+    return true;
+  }),
   body('deviceId').notEmpty().withMessage('Device fingerprint is required'),
 ];
