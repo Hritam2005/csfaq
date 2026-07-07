@@ -6,7 +6,9 @@ import {
   answerQuery,
   getIncidentDetails,
   getCapacityStats,
+  updateCapacity,
   getResolverWorkload,
+  rebalanceWorkload,
   getAuditTrail,
 } from './Admin.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
@@ -15,7 +17,7 @@ const router = Router();
 
 // All admin routes require authentication and admin role
 router.use(authenticate);
-router.use(requireRole('Admin', 'Super Admin', 'Resolver'));
+router.use(requireRole('Admin', 'Super Admin', 'Resolver', 'System Administrator', 'admin', 'super_admin', 'system_admin', 'resolver'));
 
 /**
  * @route   GET /api/v1/admin/queries/inbox
@@ -73,6 +75,7 @@ router.get('/incident/:id', getIncidentDetails);
  * @access  Admin/Resolver
  */
 router.get('/capacity', getCapacityStats);
+router.patch('/capacity', updateCapacity);
 
 /**
  * @route   GET /api/v1/admin/queries/workload
@@ -80,5 +83,6 @@ router.get('/capacity', getCapacityStats);
  * @access  Admin/Resolver
  */
 router.get('/workload', getResolverWorkload);
+router.post('/workload/rebalance', rebalanceWorkload);
 
 export default router;

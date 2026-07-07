@@ -42,14 +42,16 @@ export const authenticate = async (req, res, next) => {
  */
 export const requireRole = (...roles) => {
   return (req, res, next) => {
-    const userRole = req.user?.roleName || 'Registered User';
+    const userRole = (req.user?.roleName || req.user?.role?.name || req.user?.role || 'Registered User').toString().trim().toLowerCase();
     
     // Admin roles bypass
-    if (['Super Admin', 'System Administrator', 'Admin', 'Resolver'].includes(userRole)) {
+    const adminRoles = ['super admin', 'system administrator', 'admin', 'resolver', 'super_admin', 'system_admin'];
+    if (adminRoles.includes(userRole)) {
       return next();
     }
     
-    if (!roles.includes(userRole)) {
+    const allowedRoles = roles.map(r => r.toString().trim().toLowerCase());
+    if (!allowedRoles.includes(userRole)) {
       return next(ApiError.forbidden('You do not have the required role to perform this action.'));
     }
 

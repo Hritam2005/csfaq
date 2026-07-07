@@ -105,9 +105,11 @@ export const getQueryById = asyncHandler(async (req, res) => {
   
   const queryCase = await QueryService.getQueryById(id);
   
-  // Check access - user can only see their own queries
+  // Check access - user can only see their own queries (admins and resolvers can see all)
   const userId = req.user._id?.toString();
-  if (queryCase.userId !== userId && !['Admin', 'Super Admin'].includes(req.user.roleName)) {
+  const adminRoles = ['super admin', 'system administrator', 'admin', 'resolver', 'super_admin', 'system_admin'];
+  const userRole = (req.user.roleName || req.user.role?.name || req.user.role || '').toString().trim().toLowerCase();
+  if (queryCase.userId !== userId && !adminRoles.includes(userRole)) {
     throw ApiError.forbidden('You do not have access to this query');
   }
 
@@ -183,8 +185,9 @@ export const updateQuery = asyncHandler(async (req, res) => {
 
   const { id } = req.params;
   const userId = req.user._id?.toString();
+  const userRole = (req.user.roleName || req.user.role?.name || req.user.role || '').toString().trim().toLowerCase();
   
-  const queryCase = await QueryService.updateUserQuery(id, userId, value);
+  const queryCase = await QueryService.updateUserQuery(id, userId, value, userRole);
 
   res.status(200).json(
     ApiResponse.success(queryCase, 'Query updated successfully')
@@ -199,8 +202,9 @@ export const updateQuery = asyncHandler(async (req, res) => {
 export const deleteQuery = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user._id?.toString();
+  const userRole = (req.user.roleName || req.user.role?.name || req.user.role || '').toString().trim().toLowerCase();
   
-  await QueryService.deleteUserQuery(id, userId);
+  await QueryService.deleteUserQuery(id, userId, userRole);
 
   res.status(200).json(
     ApiResponse.success(null, 'Query deleted successfully')

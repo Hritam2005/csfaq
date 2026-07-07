@@ -179,7 +179,7 @@ export class QueryService {
     const {
       programId,
       priority,
-      status = [QueryStatus.AWAITING_HUMAN],
+      status,
       assignedTo,
       includeResolved = false,
       limit = 50,
@@ -194,12 +194,17 @@ export class QueryService {
     };
 
     // Filter by status
-    if (status && status.length > 0) {
+    if (status && status !== 'all' && status !== 'all_active' && (Array.isArray(status) ? status.length > 0 : true)) {
+      const statusArr = Array.isArray(status) ? status : [status];
       if (includeResolved) {
-        query.status = { $in: [...status, QueryStatus.RESOLVED, QueryStatus.CLOSED] };
+        query.status = { $in: [...statusArr, QueryStatus.RESOLVED, QueryStatus.CLOSED] };
       } else {
-        query.status = { $in: status };
+        query.status = { $in: statusArr };
       }
+    } else if (!includeResolved) {
+      // By default when no specific status is specified (or when 'all' is requested without resolved),
+      // include all active queries: awaiting_human, assigned (claimed cases), triaging, waiting_for_user, received, answered
+      query.status = { $nin: [QueryStatus.RESOLVED, QueryStatus.CLOSED, QueryStatus.DISMISSED] };
     }
 
     const queries = await QueryCase.find(query)
@@ -527,14 +532,16 @@ export class QueryService {
   /**
    * Update user query
    */
-  static async updateUserQuery(queryId, userId, updateData) {
+  static async updateUserQuery(queryId, userId, updateData, userRole = '') {
     const queryCase = await QueryCase.findById(queryId);
     
     if (!queryCase || queryCase.isDeleted) {
       throw ApiError.notFound('Query not found');
     }
 
-    if (queryCase.userId !== userId?.toString() && !['Admin', 'Super Admin'].includes(userId)) {
+    const adminRoles = ['super admin', 'system administrator', 'admin', 'resolver', 'super_admin', 'system_admin'];
+    const roleStr = userRole.toString().trim().toLowerCase();
+    if (queryCase.userId !== userId?.toString() && !adminRoles.includes(roleStr)) {
       throw ApiError.forbidden('You can only update your own queries');
     }
 
@@ -566,14 +573,16 @@ export class QueryService {
   /**
    * Delete user query (soft delete)
    */
-  static async deleteUserQuery(queryId, userId) {
+  static async deleteUserQuery(queryId, userId, userRole = '') {
     const queryCase = await QueryCase.findById(queryId);
     
     if (!queryCase || queryCase.isDeleted) {
       throw ApiError.notFound('Query not found');
     }
 
-    if (queryCase.userId !== userId?.toString() && !['Admin', 'Super Admin'].includes(userId)) {
+    const adminRoles = ['super admin', 'system administrator', 'admin', 'resolver', 'super_admin', 'system_admin'];
+    const roleStr = userRole.toString().trim().toLowerCase();
+    if (queryCase.userId !== userId?.toString() && !adminRoles.includes(roleStr)) {
       throw ApiError.forbidden('You can only delete your own queries');
     }
 

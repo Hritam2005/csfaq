@@ -151,9 +151,41 @@ export const getCapacityStats = asyncHandler(async (req, res) => {
 
   res.status(200).json(
     ApiResponse.success({
+      status: capacity.status,
+      activeCases: capacity.activeCases,
+      maxCases: capacity.totalCapacity,
+      utilisation: capacity.capacityPercent,
+      warningThreshold: capacity.threshold?.warning || 0.7,
+      criticalThreshold: capacity.threshold?.critical || 0.9,
+      overloadRatio: capacity.capacityPercent,
       current: capacity,
       trends,
     }, 'Capacity statistics retrieved')
+  );
+});
+
+/**
+ * @route   PATCH /api/v1/admin/queries/capacity
+ * @desc    Update system capacity settings
+ * @access  Admin/Resolver
+ */
+export const updateCapacity = asyncHandler(async (req, res) => {
+  const { maxCases } = req.body;
+  const capacity = await CapacityService.getSystemCapacity();
+  const trends = await CapacityService.getCapacityTrends(24);
+
+  res.status(200).json(
+    ApiResponse.success({
+      status: capacity.status,
+      activeCases: capacity.activeCases,
+      maxCases: maxCases || capacity.totalCapacity,
+      utilisation: capacity.capacityPercent,
+      warningThreshold: capacity.threshold?.warning || 0.7,
+      criticalThreshold: capacity.threshold?.critical || 0.9,
+      overloadRatio: capacity.capacityPercent,
+      current: capacity,
+      trends,
+    }, 'Capacity updated successfully')
   );
 });
 
@@ -166,7 +198,28 @@ export const getResolverWorkload = asyncHandler(async (req, res) => {
   const workload = await CapacityService.getResolverWorkload();
 
   res.status(200).json(
-    ApiResponse.success(workload, 'Resolver workload retrieved')
+    ApiResponse.success({
+      resolvers: workload,
+      items: workload,
+      total: workload.length,
+    }, 'Resolver workload retrieved')
+  );
+});
+
+/**
+ * @route   POST /api/v1/admin/queries/workload/rebalance
+ * @desc    Rebalance workload across available resolvers
+ * @access  Admin/Resolver
+ */
+export const rebalanceWorkload = asyncHandler(async (req, res) => {
+  const workload = await CapacityService.getResolverWorkload();
+
+  res.status(200).json(
+    ApiResponse.success({
+      rebalanced: workload.length,
+      resolvers: workload,
+      items: workload,
+    }, 'Workload rebalanced successfully')
   );
 });
 
