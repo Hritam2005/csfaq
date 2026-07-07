@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, Award, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings } from 'lucide-react';
+import { Activity, Award, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings, Home } from 'lucide-react';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 
@@ -81,6 +81,13 @@ export const DashboardLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header (Mobile + Actions) */}
         <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+          <NavLink 
+            to="/" 
+            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Back to Home"
+          >
+            <Home className="h-5 w-5" />
+          </NavLink>
           <NotificationBell />
         </header>
 
