@@ -7,6 +7,8 @@ import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 
+import { Eye, EyeOff } from 'lucide-react';
+
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { AuthService } from '../../services/AuthService';
@@ -19,7 +21,7 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/,
       'Strong password recommended: Include uppercase, lowercase, number, and special character'
     ),
   confirmPassword: z.string()
@@ -33,6 +35,8 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -146,10 +150,19 @@ export const RegisterPage: React.FC = () => {
         <div>
           <Input
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             {...register('password')}
             error={errors.password?.message}
+            rightElement={
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
           {passwordValue && (
             <div className="mt-2">
@@ -170,10 +183,19 @@ export const RegisterPage: React.FC = () => {
 
         <Input
           label="Confirm Password"
-          type="password"
+          type={showConfirmPassword ? "text" : "password"}
           placeholder="••••••••"
           {...register('confirmPassword')}
           error={errors.confirmPassword?.message}
+          rightElement={
+            <button 
+              type="button" 
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          }
         />
 
         <Button type="submit" className="w-full" isLoading={registerMutation.isPending}>

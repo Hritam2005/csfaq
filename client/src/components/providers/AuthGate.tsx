@@ -1,20 +1,29 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
-import { setInitialized } from '../../store/slices/authSlice';
+import { setInitialized, setUser } from '../../store/slices/authSlice';
 import { PageLoader } from './PageLoader';
+import { AuthService } from '../../services/AuthService';
 
 export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isInitializing } = useSelector((state: RootState) => state.auth);
+  const { isInitializing, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Attempt silent refresh or local token validation here
-    // For now, we mock instant resolution
-    setTimeout(() => {
+    const initAuth = async () => {
+      if (isAuthenticated) {
+        try {
+          const profile = await AuthService.getProfile();
+          dispatch(setUser(profile.data));
+        } catch (error) {
+          console.error('Failed to reload profile on startup:', error);
+        }
+      }
       dispatch(setInitialized());
-    }, 500);
-  }, [dispatch]);
+    };
+
+    initAuth();
+  }, [dispatch, isAuthenticated]);
 
   if (isInitializing) {
     return <PageLoader />;

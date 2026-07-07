@@ -33,6 +33,8 @@ const envVarsSchema = Joi.object()
     SMTP_PORT: Joi.number().optional(),
     SMTP_USER: Joi.string().optional().allow(''),
     SMTP_PASSWORD: Joi.string().optional().allow(''),
+    SAMAGAMA_LOGIN_URL: Joi.string().optional().allow(''),
+    SAMAGAMA_PROFILE_URL: Joi.string().optional().allow(''),
   })
   .unknown();
 
@@ -64,5 +66,9 @@ export const env = {
     port: envVars.SMTP_PORT,
     user: envVars.SMTP_USER,
     password: envVars.SMTP_PASSWORD,
+  },
+  samagama: {
+    loginUrl: envVars.SAMAGAMA_LOGIN_URL,
+    profileUrl: envVars.SAMAGAMA_PROFILE_URL,
   },
 };

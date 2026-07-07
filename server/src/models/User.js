@@ -116,6 +116,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    spurtiPoints: {
+      type: Number,
+      default: 0,
+    },
+    spurtiPointsSyncedAt: {
+      type: Date,
+      default: null,
+    },
     passwordHistory: [
       {
         password: { type: String },

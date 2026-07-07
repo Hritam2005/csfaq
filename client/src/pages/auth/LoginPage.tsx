@@ -67,12 +67,26 @@ export const LoginPage: React.FC = () => {
   };
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) => AuthService.login(data.email, data.password),
+    mutationFn: (data: LoginForm) => AuthService.login(data.email, data.password, loginType),
     onSuccess: (res) => {
+      const role = res.data.user.role?.toLowerCase() || '';
+      const isAdmin = role.includes('admin');
+
+      // Frontend validation check
+      if (loginType === 'admin' && !isAdmin) {
+        AuthService.logout().catch(() => {});
+        toast.error('Access denied. Admin credentials required.');
+        return;
+      }
+      if (loginType === 'user' && isAdmin) {
+        AuthService.logout().catch(() => {});
+        toast.error('Please use the Admin Sign In portal.');
+        return;
+      }
+
       dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
       toast.success('Successfully logged in');
-      const role = res.data.user.role?.toLowerCase() || '';
-      if (role.includes('admin')) {
+      if (isAdmin) {
         navigate('/admin/dashboard', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
@@ -99,10 +113,22 @@ export const LoginPage: React.FC = () => {
     
     // Create a temporary mutation to handle this
     toast.promise(
-      AuthService.googleLogin(email, name).then((res) => {
-        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+      AuthService.googleLogin(email, name, loginType).then((res) => {
         const role = res.data.user.role?.toLowerCase() || '';
-        if (role.includes('admin')) {
+        const isAdmin = role.includes('admin');
+
+        // Frontend validation check
+        if (loginType === 'admin' && !isAdmin) {
+          AuthService.logout().catch(() => {});
+          throw new Error('Access denied. Admin credentials required.');
+        }
+        if (loginType === 'user' && isAdmin) {
+          AuthService.logout().catch(() => {});
+          throw new Error('Please use the Admin Sign In portal.');
+        }
+
+        dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
+        if (isAdmin) {
           navigate('/admin/dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });

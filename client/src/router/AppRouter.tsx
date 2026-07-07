@@ -39,15 +39,15 @@ import { AISettingsPage } from '../pages/ai/AISettingsPage';
 import { DashboardLayout } from '../layouts/dashboard/DashboardLayout';
 import { DashboardOverviewPage } from '../pages/dashboard/DashboardOverviewPage';
 import { ActivityPage } from '../pages/dashboard/ActivityPage';
+import { SpurtiPointsPage } from '../pages/dashboard/SpurtiPointsPage';
 
 
 import { AdminLayout } from '../layouts/admin/AdminLayout';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminUsersPage } from '../pages/admin/users/AdminUsersPage';
 import { AdminRolesPage } from '../pages/admin/roles/AdminRolesPage';
-import { AdminAISettingsPage } from '../pages/admin/settings/AdminAISettingsPage';
-import { AdminDocumentsPage } from '../pages/admin/documents/AdminDocumentsPage';
 import { AdminQueriesPage } from '../pages/admin/queries/AdminQueriesPage';
+import { AdminRedemptionsPage } from '../pages/admin/AdminRedemptionsPage';
 import { SupportPage } from '../pages/public/SupportPage';
 
 // Query-Triage microservice pages
@@ -118,10 +118,11 @@ export const appRouter = createBrowserRouter([
       { path: 'queries', element: <Navigate to="/queries/my" replace /> },
       { path: 'queries/new', element: <Navigate to="/queries/new" replace /> },
       // Other routes fallback to placeholders or same view for now
-      { path: 'history', element: <ActivityPage /> },
-      { path: 'bookmarks', element: <ActivityPage /> },
-      { path: 'collections', element: <ActivityPage /> },
-      { path: 'achievements', element: <ActivityPage /> },
+      { path: 'history', element: <AIHistoryPage /> },
+      { path: 'bookmarks', element: <AIBookmarksPage /> },
+      { path: 'collections', element: <CategoriesPage /> },
+      { path: 'collections/:categoryName', element: <FAQPage /> },
+      { path: 'achievements', element: <SpurtiPointsPage /> },
       { path: 'learning', element: <ActivityPage /> },
       { path: 'settings', element: <ActivityPage /> },
     ]
@@ -160,6 +161,7 @@ export const appRouter = createBrowserRouter([
       { path: 'faqs', element: <FAQPage /> },
       { path: 'faqs/:id', element: <FAQDetailsPage /> },
       { path: 'categories', element: <CategoriesPage /> },
+      { path: 'categories/:categoryName', element: <FAQPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'support', element: <SupportPage /> },
     ],
@@ -243,15 +245,8 @@ export const appRouter = createBrowserRouter([
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'roles', element: <AdminRolesPage /> },
       { path: 'knowledge', element: <div className="p-8">Knowledge Management coming soon</div> },
-      { path: 'documents', element: <AdminDocumentsPage /> },
       { path: 'queries', element: <AdminQueriesPage /> },
-      { path: 'ai', element: <AdminAISettingsPage /> },
-      { path: 'search', element: <div className="p-8">Search Settings coming soon</div> },
-      { path: 'analytics', element: <div className="p-8">Analytics coming soon</div> },
-      { path: 'system', element: <div className="p-8">System Settings coming soon</div> },
-      { path: 'logs', element: <div className="p-8">Logs coming soon</div> },
-      { path: 'backups', element: <div className="p-8">Backups coming soon</div> },
-      { path: 'security', element: <div className="p-8">Security coming soon</div> },
+      { path: 'redemptions', element: <AdminRedemptionsPage /> },
     ]
   },
   {

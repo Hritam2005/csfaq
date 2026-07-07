@@ -1,7 +1,7 @@
 import { apiClient } from './axios';
 
 export class AuthService {
-  static async login(email: string, password: string) {
+  static async login(email: string, password: string, loginType?: string) {
     // Generate or retrieve a persistent device ID from localStorage
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
@@ -14,12 +14,13 @@ export class AuthService {
       deviceId,
       deviceName: navigator.userAgent.substring(0, 50),
       browser: 'Web',
-      os: 'Unknown'
+      os: 'Unknown',
+      loginType
     });
     return response.data;
   }
 
-  static async googleLogin(email: string, name: string) {
+  static async googleLogin(email: string, name: string, loginType?: string) {
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
       deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
@@ -31,7 +32,8 @@ export class AuthService {
       deviceId,
       deviceName: navigator.userAgent.substring(0, 50),
       browser: 'Web',
-      os: 'Unknown'
+      os: 'Unknown',
+      loginType
     });
     return response.data;
   }
@@ -58,6 +60,11 @@ export class AuthService {
 
   static async terminateSession(sessionId: string) {
     const response = await apiClient.delete(`/auth/sessions/${sessionId}`);
+    return response.data;
+  }
+
+  static async dropOutInternship() {
+    const response = await apiClient.post('/auth/dropout');
     return response.data;
   }
 }

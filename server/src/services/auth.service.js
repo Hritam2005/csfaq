@@ -3,9 +3,11 @@ import JWTService from './jwt.service.js';
 import EmailService from './email.service.js';
 import ApiError from '../utils/ApiError.js';
 import VerificationToken from '../models/VerificationToken.js';
+import { SamagamaService } from '../modules/samagama/Samagama.service.js';
 import Device from '../models/Device.js';
 import Role from '../models/Role.js';
 import User from '../models/User.js';
+import Redemption from '../models/Redemption.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import {
@@ -186,6 +188,20 @@ class AuthService {
 
     // Success! Reset failed logins
     await UserRepository.resetFailedLogins(user._id);
+
+    // Try to sync Spurti points using raw credentials if not already custom synced
+    if (!user.spurtiPointsSyncedAt) {
+      try {
+        const syncResult = await SamagamaService.getSpurtiPoints(email, password);
+        const unusedRedemptions = await Redemption.find({ user: user._id, used: false });
+        const unusedCost = unusedRedemptions.reduce((total, r) => total + r.cost, 0);
+        user.spurtiPoints = Math.max(0, syncResult.points - unusedCost);
+        user.spurtiPointsSyncedAt = syncResult.syncedAt;
+        await user.save();
+      } catch (err) {
+        console.warn(`Could not auto-sync Samagama points for user ${email}: ${err.message}`);
+      }
+    }
 
     // Register Device if new
     let device = await Device.findOne({ user: user._id, deviceId: deviceInfo.deviceId });

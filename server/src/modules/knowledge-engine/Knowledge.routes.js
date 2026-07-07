@@ -1,20 +1,11 @@
 import { Router } from 'express';
-import { reindexDocument, getStatistics, clearCache, getCitation, getConfidence } from './Knowledge.controller.js';
+import { getStatistics, clearCache, getConfidence } from './Knowledge.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
 // Apply auth middleware
 router.use(authenticate);
-
-/**
- * @swagger
- * /knowledge/reindex/{id}:
- *   post:
- *     summary: Trigger vector re-indexing for a document
- *     tags: [Knowledge]
- */
-router.post('/reindex/:id', requireRole('Super Admin', 'Knowledge Admin'), reindexDocument);
 
 /**
  * @swagger
@@ -33,15 +24,6 @@ router.get('/statistics', getStatistics);
  *     tags: [Knowledge]
  */
 router.post('/cache/clear', requireRole('Super Admin'), clearCache);
-
-/**
- * @swagger
- * /knowledge/citations/{chunkId}:
- *   get:
- *     summary: Generate a citation for a specific chunk
- *     tags: [Knowledge]
- */
-router.get('/citations/:chunkId', getCitation);
 
 /**
  * @swagger

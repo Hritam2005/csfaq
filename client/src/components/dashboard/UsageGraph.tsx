@@ -1,17 +1,11 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Mon', queries: 4000, tokens: 2400 },
-  { name: 'Tue', queries: 3000, tokens: 1398 },
-  { name: 'Wed', queries: 2000, tokens: 9800 },
-  { name: 'Thu', queries: 2780, tokens: 3908 },
-  { name: 'Fri', queries: 1890, tokens: 4800 },
-  { name: 'Sat', queries: 2390, tokens: 3800 },
-  { name: 'Sun', queries: 3490, tokens: 4300 },
-];
+interface UsageGraphProps {
+  data?: Array<{ name: string; queries: number; tokens: number }>;
+}
 
-export const UsageGraph: React.FC = () => {
+export const UsageGraph: React.FC<UsageGraphProps> = ({ data = [] }) => {
   return (
     <div className="h-[300px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">

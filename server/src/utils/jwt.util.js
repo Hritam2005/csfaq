@@ -25,7 +25,7 @@ export const generateAccessToken = (user, roleId = null) => {
   return jwt.sign(
     { userId, roleId: resolvedRoleId, roleName, fullName, email },
     env.jwt.secret,
-    { expiresIn: '15m' } // Short lived
+    { expiresIn: '7d' } // Extended for development
   );
 };
 

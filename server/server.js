@@ -1,9 +1,12 @@
+import dns from "node:dns";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+console.log("After override:", dns.getServers());
 import app from './src/app.js';
 import { env } from './src/config/env.js';
 import { connectDB } from './src/config/db.js';
 import { logger } from './src/config/logger.js';
-import { initializeDocumentJobs } from './src/modules/document-processing/Document.jobs.js';
-import { initializeDocumentCronJobs } from './src/modules/document-processing/Document.cron.js';
 import { initializeKnowledgeJobs } from './src/modules/knowledge-engine/Knowledge.jobs.js';
 import { initializeSystemJobs } from './src/jobs/SystemJobs.js';
 
@@ -21,9 +24,11 @@ const startServer = async () => {
     // Connect to Database
     await connectDB();
 
+    // Auto-seed admin user if it doesn't exist
+    const { seedAdmin } = await import('./src/utils/seedAdmin.js');
+    await seedAdmin();
+
     // Initialize Background Jobs
-    initializeDocumentJobs();
-    initializeDocumentCronJobs();
     initializeKnowledgeJobs();
     initializeSystemJobs();
 
