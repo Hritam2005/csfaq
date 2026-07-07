@@ -62,4 +62,9 @@ export class AuthService {
     const response = await apiClient.delete(`/auth/sessions/${sessionId}`);
     return response.data;
   }
+
+  static async dropOutInternship() {
+    const response = await apiClient.post('/auth/dropout');
+    return response.data;
+  }
 }

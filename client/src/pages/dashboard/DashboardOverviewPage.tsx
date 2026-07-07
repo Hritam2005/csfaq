@@ -56,7 +56,9 @@ export const DashboardOverviewPage: React.FC = () => {
   const sourcePoints = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
     ? user.spurtiPoints
     : earnedPoints;
-  const spurtiPoints = Math.max(sourcePoints - spentPoints, 0);
+  const spurtiPoints = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
+    ? user.spurtiPoints
+    : Math.max(sourcePoints - spentPoints, 0);
 
   return (
     <div className="space-y-8">

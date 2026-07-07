@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, login, logout, refresh, getProfile } from '../controllers/auth.controller.js';
+import { register, login, logout, refresh, getProfile, dropOutInternship, uploadAvatar, deleteAvatar } from '../controllers/auth.controller.js';
+import { uploadAvatarMiddleware } from '../middlewares/upload.middleware.js';
 import { registerValidation, loginValidation, refreshValidation } from '../validators/auth.validator.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { authLimiter } from '../middlewares/rateLimiter.middleware.js';
@@ -175,6 +176,26 @@ router.get(
   '/me',
   authenticate,
   getProfile
+);
+
+router.post(
+  '/dropout',
+  authenticate,
+  auditAction('auth.dropout', 'User'),
+  dropOutInternship
+);
+
+router.put(
+  '/avatar',
+  authenticate,
+  uploadAvatarMiddleware.single('avatar'),
+  uploadAvatar
+);
+
+router.delete(
+  '/avatar',
+  authenticate,
+  deleteAvatar
 );
 
 export default router;

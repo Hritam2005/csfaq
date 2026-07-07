@@ -6,6 +6,7 @@ import VerificationToken from '../models/VerificationToken.js';
 import { SamagamaService } from '../modules/samagama/Samagama.service.js';
 import Device from '../models/Device.js';
 import Role from '../models/Role.js';
+import Redemption from '../models/Redemption.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
@@ -72,14 +73,18 @@ class AuthService {
     // Success! Reset failed logins
     await UserRepository.resetFailedLogins(user._id);
 
-    // Try to sync Spurti points using raw credentials
-    try {
-      const syncResult = await SamagamaService.getSpurtiPoints(email, password);
-      user.spurtiPoints = syncResult.points;
-      user.spurtiPointsSyncedAt = syncResult.syncedAt;
-      await user.save();
-    } catch (err) {
-      console.warn(`Could not auto-sync Samagama points for user ${email}: ${err.message}`);
+    // Try to sync Spurti points using raw credentials if not already custom synced
+    if (!user.spurtiPointsSyncedAt) {
+      try {
+        const syncResult = await SamagamaService.getSpurtiPoints(email, password);
+        const unusedRedemptions = await Redemption.find({ user: user._id, used: false });
+        const unusedCost = unusedRedemptions.reduce((total, r) => total + r.cost, 0);
+        user.spurtiPoints = Math.max(0, syncResult.points - unusedCost);
+        user.spurtiPointsSyncedAt = syncResult.syncedAt;
+        await user.save();
+      } catch (err) {
+        console.warn(`Could not auto-sync Samagama points for user ${email}: ${err.message}`);
+      }
     }
 
     // Register Device if new
