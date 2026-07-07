@@ -21,6 +21,11 @@ export const refreshValidation = [
 ];
 
 export const googleLoginValidation = [
-  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
+  body().custom((val) => {
+    if (!val.token && !val.credential && !val.email) {
+      throw new Error('Please provide a Google OAuth token');
+    }
+    return true;
+  }),
   body('deviceId').notEmpty().withMessage('Device fingerprint is required'),
 ];

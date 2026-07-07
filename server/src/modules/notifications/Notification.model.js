@@ -27,7 +27,8 @@ const notificationSchema = new mongoose.Schema(
         'AI Failure',
         'Processing Failed',
         'New Version Available',
-        'System Event'
+        'System Event',
+        'query_update'
       ],
       required: true,
     },

@@ -20,20 +20,21 @@ export class AuthService {
     return response.data;
   }
 
-  static async googleLogin(email: string, name: string, loginType?: string) {
+  static async googleLogin(token: string, loginType?: string, action?: string, name?: string) {
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
       deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
       localStorage.setItem('deviceId', deviceId);
     }
     const response = await apiClient.post('/auth/google', { 
-      email, 
-      name,
+      token,
       deviceId,
       deviceName: navigator.userAgent.substring(0, 50),
       browser: 'Web',
       os: 'Unknown',
-      loginType
+      loginType,
+      action,
+      name
     });
     return response.data;
   }

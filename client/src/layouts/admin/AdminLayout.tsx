@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, Shield, FileText, Database, 
-  Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift, Home
+import {
+  LayoutDashboard, Users, Shield, FileText,
+  Menu, X, LogOut, ChevronDown, Gift, Home, Moon, Sun
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
 import { logout } from '../../store/slices/authSlice';
+import { setTheme } from '../../store/slices/themeSlice';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 import { AuthService } from '../../services/AuthService';
-import { ENV } from '../../config/env';
 
 const sidebarNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -27,6 +26,11 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { mode } = useSelector((state: RootState) => state.theme);
+
+  const toggleTheme = () => {
+    dispatch(setTheme(mode === 'dark' ? 'light' : 'dark'));
+  };
 
   const handleLogout = async () => {
     try {
@@ -41,8 +45,8 @@ export const AdminLayout: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden" 
+        <div
+          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -68,16 +72,14 @@ export const AdminLayout: React.FC = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium ${
-                    isActive
+                  className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium ${isActive
                       ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   <item.icon
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                      isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
-                    }`}
+                    className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
+                      }`}
                     aria-hidden="true"
                   />
                   {item.name}
@@ -99,10 +101,18 @@ export const AdminLayout: React.FC = () => {
           >
             <Menu className="h-6 w-6" />
           </button>
-          
-          <div className="flex flex-1 justify-end items-center gap-4">
-            <Link 
-              to="/" 
+
+          <div className="flex flex-1 justify-end items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+            <Link
+              to="/"
               className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Back to Home"
             >
@@ -111,22 +121,14 @@ export const AdminLayout: React.FC = () => {
             <NotificationBell />
 
             <div className="flex items-center gap-2 relative group cursor-pointer">
-              {user?.avatar ? (
-                <img 
-                  src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
-                  alt="Avatar"
-                  className="h-8 w-8 rounded-full object-cover border border-red-200 dark:border-red-900/40"
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                  {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
-                </div>
-              )}
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
+              </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {user?.fullName || user?.name}
               </span>
               <ChevronDown className="h-4 w-4 text-gray-500" />
-              
+
               <div className="absolute right-0 top-full pt-1 w-48 hidden group-hover:block z-50">
                 <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dark:bg-gray-800 dark:ring-gray-700 py-1">
                   <button onClick={handleLogout} className="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700">

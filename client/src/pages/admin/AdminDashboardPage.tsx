@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, CheckCircle2, Database, FileQuestion, ShieldAlert, ToggleRight, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileQuestion, ShieldAlert, ToggleRight, Users } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { UsageGraph } from '../../components/dashboard/UsageGraph';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';

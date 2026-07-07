@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
+import { logout } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 interface SocketContextType {
@@ -19,6 +20,7 @@ const SocketContext = createContext<SocketContextType>({
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const dispatch = useDispatch();
   const { token, user } = useSelector((state: RootState) => state.auth);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [adminSocket, setAdminSocket] = useState<Socket | null>(null);
@@ -59,6 +61,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
       toast.error(`Socket connection error: ${error.message}`);
+    });
+
+    newSocket.on('user_removed', (payload: any) => {
+      alert(payload.message || 'You have been excused from the internship.');
+      dispatch(logout());
+      newSocket.disconnect();
+      setSocket(null);
+      setIsConnected(false);
+      window.location.href = '/';
     });
 
     setSocket(newSocket);
