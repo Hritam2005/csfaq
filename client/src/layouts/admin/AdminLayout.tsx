@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Shield, FileText,
-<<<<<<< HEAD
-  Menu, X, LogOut, ChevronDown, Gift, Home
-=======
   Menu, X, LogOut, ChevronDown, Gift, Home, Moon, Sun
->>>>>>> bfa89b502dacbdc34775a9249fac93d17aa6b99a
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
