@@ -1,10 +1,20 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, Award, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings, Home } from 'lucide-react';
+import { Activity, Award, Bookmark, Folder, GraduationCap, History, LayoutDashboard, Settings, Home, Moon, Sun } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { cn } from '../../components/ui/Button';
 import { NotificationBell } from '../../components/ui/NotificationBell';
+import { RootState } from '../../store/store';
+import { setTheme } from '../../store/slices/themeSlice';
 
 export const DashboardLayout: React.FC = () => {
+  const dispatch = useDispatch();
+  const { mode } = useSelector((state: RootState) => state.theme);
+
+  const toggleTheme = () => {
+    dispatch(setTheme(mode === 'dark' ? 'light' : 'dark'));
+  };
+
   const navItems = [
     { name: 'Overview', to: '/app/dashboard', icon: LayoutDashboard, exact: true },
     { name: 'My Activity', to: '/app/activity', icon: Activity },
@@ -80,7 +90,15 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header (Mobile + Actions) */}
-        <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 sm:gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-8">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <NavLink 
             to="/" 
             className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

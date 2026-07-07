@@ -85,6 +85,7 @@ export const login = asyncHandler(async (req, res) => {
     avatar: user.avatar,
     profile: user.profile || { title: '', bio: '' },
     role: user.role?.name || 'Registered User',
+    permissions: user.role?.permissions?.map(p => p.name || p) || [],
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };
@@ -93,21 +94,22 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const googleLogin = asyncHandler(async (req, res) => {
-  const { email, name, deviceId, deviceName, browser, os, loginType } = req.body;
+  const { token, credential, email, name, deviceId, deviceName, browser, os, loginType, action } = req.body;
   const ipAddress = req.ip;
+
+  if (loginType === 'admin') {
+    throw ApiError.forbidden('Google authentication is disabled for Admin accounts. Please use email and password to sign in to the Admin portal.');
+  }
 
   const deviceInfo = { deviceId, deviceName, browser, os };
   
-  const { user, tokens } = await AuthService.googleLogin(email, name, deviceInfo, ipAddress);
+  const { user, tokens } = await AuthService.googleLogin(token || credential, email, name, deviceInfo, ipAddress, action);
 
   const roleName = user.role?.name?.toLowerCase() || '';
   const isAdmin = roleName.includes('admin');
   
-  if (loginType === 'admin' && !isAdmin) {
-    throw ApiError.forbidden('Access denied. Admin credentials required.');
-  }
-  if (loginType === 'user' && isAdmin) {
-    throw ApiError.forbidden('Please use the Admin Sign In portal.');
+  if (isAdmin) {
+    throw ApiError.forbidden('Google authentication is disabled for Admin accounts. Please use email and password to sign in to the Admin portal.');
   }
 
   res.cookie('accessToken', tokens.accessToken, cookieOptions);
@@ -121,7 +123,8 @@ export const googleLogin = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     profile: user.profile || { title: '', bio: '' },
-    role: user.role ? user.role.name : 'Registered User',
+    role: user.role?.name || 'Registered User',
+    permissions: user.role?.permissions?.map(p => p.name || p) || [],
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
   };

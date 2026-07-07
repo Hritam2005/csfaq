@@ -78,6 +78,9 @@ export const getActivity = asyncHandler(async (req, res) => {
     } else if (al.action === 'auth.register') {
       type = 'bookmark';
       title = 'User Account Registered';
+    } else if (al.action === 'auth.google') {
+      type = 'bookmark';
+      title = 'User Logged In via Google';
     }
     
     feeds.push({
