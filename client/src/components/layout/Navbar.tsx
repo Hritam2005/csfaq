@@ -82,7 +82,7 @@ export const Navbar: React.FC = () => {
             >
               {user?.avatar ? (
                 <img 
-                  src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
+                  src={user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
                   alt="User Avatar"
                   className="h-full w-full object-cover"
                 />

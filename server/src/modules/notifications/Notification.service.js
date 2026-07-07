@@ -56,6 +56,10 @@ class NotificationService {
     }
   }
 
+  async getUserNotifications(userId, limit = 10) {
+    return await Notification.find({ userId }).sort({ createdAt: -1 }).limit(limit);
+  }
+
   async getUnreadCount(userId) {
     return await Notification.countDocuments({ userId, isRead: false });
   }

@@ -4,3 +4,7 @@
 venv/
 node_modules/
 dist/
+status.txt
+status_utf8.txt
+status-utf8.txt
+

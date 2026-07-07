@@ -10,7 +10,9 @@ import {
   getUsers,
   getRoles,
   getStats,
-  getRedemptions
+  getRedemptions,
+  deleteUser,
+  suspendUser
 } from './Admin.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
 
@@ -36,6 +38,8 @@ router.get('/logs/audit', getAuditLogs);
 
 // Users and Roles
 router.get('/users', getUsers);
+router.delete('/users/:userId', deleteUser);
+router.put('/users/:userId/suspend', suspendUser);
 router.get('/roles', getRoles);
 router.get('/stats', getStats);
 router.get('/redemptions', getRedemptions);

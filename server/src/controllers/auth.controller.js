@@ -4,6 +4,7 @@ import path from 'path';
 import AuthService from '../services/auth.service.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import Role from '../models/Role.js';
+import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { env } from '../config/env.js';
 
@@ -82,6 +83,7 @@ export const login = asyncHandler(async (req, res) => {
     username: user.username,
     email: user.email,
     avatar: user.avatar,
+    profile: user.profile || { title: '', bio: '' },
     role: user.role?.name || 'Registered User',
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
@@ -118,6 +120,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
     username: user.username,
     email: user.email,
     avatar: user.avatar,
+    profile: user.profile || { title: '', bio: '' },
     role: user.role ? user.role.name : 'Registered User',
     spurtiPoints: user.spurtiPoints || 0,
     spurtiPointsSyncedAt: user.spurtiPointsSyncedAt || null,
@@ -164,6 +167,7 @@ export const getProfile = asyncHandler(async (req, res) => {
     username: req.user.username,
     email: req.user.email,
     avatar: req.user.avatar,
+    profile: req.user.profile || { title: '', bio: '' },
     role: req.user.role?.name || 'Registered User',
     permissions: req.userPermissions,
     spurtiPoints: req.user.spurtiPoints || 0,
@@ -185,71 +189,22 @@ export const dropOutInternship = asyncHandler(async (req, res) => {
   res.status(200).json(ApiResponse.success(null, 'Successfully dropped out from internship. Account deleted.'));
 });
 
-export const uploadAvatar = asyncHandler(async (req, res) => {
-  if (!req.file) {
-    throw ApiError.badRequest('No file uploaded');
+export const updatePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = req.user;
+
+  const userWithPassword = await User.findById(user._id).select('+password');
+  if (!userWithPassword) {
+    throw ApiError.notFound('User not found');
   }
 
-  const filename = req.file.filename;
-  const dbPath = `uploads/${filename}`;
-
-  if (req.user.avatar) {
-    const prevPath = path.join(process.cwd(), req.user.avatar);
-    if (fs.existsSync(prevPath)) {
-      try {
-        fs.unlinkSync(prevPath);
-      } catch (err) {
-        console.error('Failed to unlink previous avatar', err);
-      }
-    }
+  const isMatch = await userWithPassword.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw ApiError.unauthorized('Incorrect current password');
   }
 
-  req.user.avatar = dbPath;
-  await req.user.save();
+  userWithPassword.password = newPassword;
+  await userWithPassword.save();
 
-  const userData = {
-    _id: req.user._id,
-    uuid: req.user.uuid,
-    fullName: req.user.fullName,
-    username: req.user.username,
-    email: req.user.email,
-    avatar: req.user.avatar,
-    role: req.user.role?.name || 'Registered User',
-    permissions: req.userPermissions,
-    spurtiPoints: req.user.spurtiPoints || 0,
-    spurtiPointsSyncedAt: req.user.spurtiPointsSyncedAt || null,
-  };
-
-  res.status(200).json(ApiResponse.success(userData, 'Profile picture updated'));
-});
-
-export const deleteAvatar = asyncHandler(async (req, res) => {
-  if (req.user.avatar) {
-    const prevPath = path.join(process.cwd(), req.user.avatar);
-    if (fs.existsSync(prevPath)) {
-      try {
-        fs.unlinkSync(prevPath);
-      } catch (err) {
-        console.error('Failed to unlink deleted avatar', err);
-      }
-    }
-  }
-
-  req.user.avatar = '';
-  await req.user.save();
-
-  const userData = {
-    _id: req.user._id,
-    uuid: req.user.uuid,
-    fullName: req.user.fullName,
-    username: req.user.username,
-    email: req.user.email,
-    avatar: req.user.avatar,
-    role: req.user.role?.name || 'Registered User',
-    permissions: req.userPermissions,
-    spurtiPoints: req.user.spurtiPoints || 0,
-    spurtiPointsSyncedAt: req.user.spurtiPointsSyncedAt || null,
-  };
-
-  res.status(200).json(ApiResponse.success(userData, 'Profile picture removed'));
+  res.status(200).json(ApiResponse.success(null, 'Password updated successfully'));
 });

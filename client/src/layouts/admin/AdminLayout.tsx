@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, Shield, FileText, Database, 
-  Bot, Search, BarChart3, Settings, Server, 
-  History, ShieldCheck, Menu, X, LogOut, ChevronDown, Gift, Home
+  LayoutDashboard, Users, Shield, FileText, 
+  Menu, X, LogOut, ChevronDown, Gift, Home
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
 import { logout } from '../../store/slices/authSlice';
 import { NotificationBell } from '../../components/ui/NotificationBell';
 import { AuthService } from '../../services/AuthService';
-import { ENV } from '../../config/env';
 
 const sidebarNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -111,17 +109,9 @@ export const AdminLayout: React.FC = () => {
             <NotificationBell />
 
             <div className="flex items-center gap-2 relative group cursor-pointer">
-              {user?.avatar ? (
-                <img 
-                  src={user.avatar.startsWith('http') ? user.avatar : `${ENV.API_URL}/${user.avatar}`}
-                  alt="Avatar"
-                  className="h-8 w-8 rounded-full object-cover border border-red-200 dark:border-red-900/40"
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                  {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
-                </div>
-              )}
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
+              </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {user?.fullName || user?.name}
               </span>
