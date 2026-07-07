@@ -7,7 +7,7 @@ class JWTService {
    * Issue new Access and Refresh tokens
    */
   static async issueTokens(user, deviceId) {
-    const accessToken = generateAccessToken(user._id, user.role);
+    const accessToken = generateAccessToken(user);
     const refreshTokenString = generateRefreshTokenString();
 
     // Set expiration for refresh token (e.g., 7 days)
@@ -61,7 +61,10 @@ class JWTService {
       expiresAt,
     });
 
-    const accessToken = generateAccessToken(oldToken.user, null); // Will need user's role to be fully correct, normally fetch user
+    // Fetch the full user so the access token carries roleName/fullName/email
+    const User = (await import('../models/User.js')).default;
+    const fullUser = await User.findById(oldToken.user).populate('role');
+    const accessToken = generateAccessToken(fullUser);
 
     return { accessToken, refreshToken: newTokenString, userId: oldToken.user };
   }

@@ -1,64 +1,38 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { MessageSquare, Database, Brain, Gift } from 'lucide-react';
+import { MessageSquare, Database, Bookmark, Brain, Inbox, ArrowRight, MessageSquarePlus, Sparkles, Gift } from 'lucide-react';
 import { useDashboardMetrics, useActivityFeed, useRecommendations } from '../../hooks/dashboard/useDashboard';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { ActivityTimeline } from '../../components/dashboard/ActivityTimeline';
 import { RecommendationWidget } from '../../components/dashboard/RecommendationWidget';
 import { InteractionVolumeTracker } from '../../components/dashboard/InteractionVolumeTracker';
+import { UsageGraph } from '../../components/dashboard/UsageGraph';
 import { DashboardService } from '../../services/dashboard/DashboardService';
+import { useQuery } from '@tanstack/react-query';
+import { TriageService } from '../../services/triage/TriageService';
 
 export const DashboardOverviewPage: React.FC = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  
+  const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+
   const { data: metrics } = useDashboardMetrics();
   const { data: activity } = useActivityFeed();
   const { data: recommendations } = useRecommendations();
-  const [redemptions, setRedemptions] = useState<any[]>([]);
-  const storageKey = `spurti-redemptions-${user?._id || user?.email || 'guest'}`;
 
-  useEffect(() => {
-    try {
-      const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      setRedemptions(local);
-    } catch (e) {}
-
-    if (user) {
-      DashboardService.getUserRedemptions()
-        .then((dbRedemptions) => {
-          const mapped = dbRedemptions.map((r: any) => ({
-            id: r._id,
-            title: r.title,
-            cost: r.cost,
-            code: r.code,
-            redeemedAt: r.redeemedAt || r.createdAt,
-            used: r.used
-          }));
-          setRedemptions(mapped);
-        })
-        .catch((err) => console.error('Failed to load redemptions on overview:', err));
-    }
-  }, [user, storageKey]);
-
-  const spentPoints = useMemo(() => {
-    return redemptions.reduce((total, r) => total + r.cost, 0);
-  }, [redemptions]);
-
-  const earnedPoints = useMemo(() => {
-    const conversationPoints = (metrics?.activeConversations || 0) * 15;
-    const bookmarkPoints = (metrics?.bookmarkedAnswers || 0) * 10;
-    const activityPoints = (activity?.length || 0) * 8;
-    return 250 + conversationPoints + bookmarkPoints + activityPoints;
-  }, [activity?.length, metrics?.activeConversations, metrics?.bookmarkedAnswers]);
-
-  const sourcePoints = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
-    ? user.spurtiPoints
-    : earnedPoints;
-  const spurtiPoints = user?.spurtiPointsSyncedAt && user?.spurtiPoints !== undefined && user?.spurtiPoints !== null
-    ? user.spurtiPoints
-    : Math.max(sourcePoints - spentPoints, 0);
+  // Live count of the current user's submitted queries
+  const { data: myQueries } = useQuery({
+    queryKey: ['my-queries-overview'],
+    queryFn: () => TriageService.getMyQueries({ limit: 50 }),
+    enabled: !!isAuthenticated && !!user?._id,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
+  });
+  const myQueriesCount = myQueries?.total ?? 0;
+  // `resolved` and `closed` are terminal states per the QueryStatus union.
+  const myOpenQueriesCount = (myQueries?.queries ?? []).filter(
+    (q) => q.status !== 'resolved' && q.status !== 'closed'
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -79,7 +53,55 @@ export const DashboardOverviewPage: React.FC = () => {
               Track your active contributions, explore crowd-sourced FAQs, and monitor your milestone progression across the IIT Ropar research ecosystem.
             </p>
           </div>
+          <Link
+            to="/queries/new"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors shrink-0"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+            Submit a Query
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+      </div>
+
+      {/* Triage entry point CTA — high-visibility card so users discover the feature */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Link
+          to="/queries/new"
+          className="group lg:col-span-2 flex items-center justify-between rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 hover:border-primary-300 transition-colors dark:border-primary-900/50 dark:from-primary-900/20 dark:to-gray-900/30"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-base font-bold text-gray-900 dark:text-white">Need help? Submit a Query</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                AI-powered answers with human escalation when needed — typically resolved in minutes.
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary-600 transition-transform group-hover:translate-x-1" />
+        </Link>
+        <Link
+          to="/queries/my"
+          className="group flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 hover:border-gray-300 transition-colors dark:border-gray-800 dark:bg-gray-900/50"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <Inbox className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-base font-bold text-gray-900 dark:text-white">My Queries</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {myOpenQueriesCount > 0
+                  ? `${myOpenQueriesCount} open · ${myQueriesCount} total`
+                  : `${myQueriesCount} submitted`}
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1" />
+        </Link>
       </div>
 
       {/* Metrics Row */}
@@ -104,11 +126,9 @@ export const DashboardOverviewPage: React.FC = () => {
           trendUp={true}
         />
         <StatCard 
-          title="Spurti Points" 
-          value={spurtiPoints.toLocaleString()} 
-          icon={<Gift className="h-5 w-5" />} 
-          trend="Samagama credits"
-          trendUp={true}
+          title="Bookmarked Answers" 
+          value={metrics?.bookmarkedAnswers || 45} 
+          icon={<Bookmark className="h-5 w-5" />} 
         />
       </div>
 
@@ -127,7 +147,6 @@ export const DashboardOverviewPage: React.FC = () => {
         </div>
         <span className="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all group-hover:bg-primary-700 dark:bg-primary-500 dark:text-gray-950 dark:group-hover:bg-primary-400">Open Wallet</span>
       </Link>
-
       {/* Main Grid: Usage Graph & Activity Feed */}
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Interaction Volume Tracker (GitHub Commit Graph Style) */}
