@@ -65,12 +65,12 @@ flowchart TD
     Redis[(Redis Queue / Cache)]
     Samagama["External Samagama Gamification API"]
 
-    Client <-->|REST API / HTTP| Gateway
-    Client <-->|WebSockets (Socket.IO)| Gateway
-    Gateway <-->|MongoDB Driver / Mongoose| MongoDB
-    Gateway <-->|BullMQ / ioredis| Redis
-    Gateway <-->|REST Proxy / Stream| AIEngine
-    Gateway <-->|OAuth / Profile Sync| Samagama
+    Client ---|REST API / HTTP| Gateway
+    Client ---|WebSockets Socket.IO| Gateway
+    Gateway ---|MongoDB Driver / Mongoose| MongoDB
+    Gateway ---|BullMQ / ioredis| Redis
+    Gateway ---|REST Proxy / Stream| AIEngine
+    Gateway ---|OAuth / Profile Sync| Samagama
 ```
 
 ---
