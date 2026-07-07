@@ -151,7 +151,11 @@ export const RegisterPage: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
-          label="Full Name"
+          label={
+            <span className="flex items-center">
+              Full Name <span className="text-red-500 ml-1" title="Required">*</span>
+            </span>
+          }
           type="text"
           placeholder="Jane Doe"
           {...register('name')}

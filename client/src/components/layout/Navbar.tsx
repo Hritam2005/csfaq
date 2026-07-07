@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Menu, UserCircle } from 'lucide-react';
+import { Moon, Sun, Menu, UserCircle, Inbox, Search } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../ui/Button';
 import { NotificationBell } from '../ui/NotificationBell';
@@ -9,6 +9,8 @@ import { setTheme } from '../../store/slices/themeSlice';
 import { logout } from '../../store/slices/authSlice';
 import { AuthService } from '../../services/AuthService';
 import { ENV } from '../../config/env';
+import { useQuery } from '@tanstack/react-query';
+import { TriageService } from '../../services/triage/TriageService';
 
 export const Navbar: React.FC = () => {
   const dispatch = useDispatch();
@@ -20,6 +22,22 @@ export const Navbar: React.FC = () => {
   const toggleTheme = () => {
     dispatch(setTheme(mode === 'dark' ? 'light' : 'dark'));
   };
+
+  // Role detection drives which triage link we show in the navbar.
+  // `User.role` is a single string per the auth slice type.
+  const userRole = (user?.role ?? '').toString();
+  const isAdmin =
+    userRole.toLowerCase().includes('admin') || userRole === 'Super Admin';
+
+  // Live awaiting count for the admin "Triage Queue" badge.
+  const { data: capacity } = useQuery({
+    queryKey: ['triage-capacity-nav'],
+    queryFn: TriageService.getCapacity,
+    enabled: !!isAuthenticated && isAdmin,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+  });
+  const awaitingBadge = capacity?.activeCases ?? 0;
 
   const handleLogout = async () => {
     try {
@@ -44,7 +62,7 @@ export const Navbar: React.FC = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-background/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        
+
         {/* Logo & Primary Nav */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
@@ -55,19 +73,47 @@ export const Navbar: React.FC = () => {
               Vicharanashala
             </span>
           </Link>
-          
-          <div className="hidden md:flex gap-6">
+
+          <div className="hidden md:flex items-center gap-6">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Home</Link>
             <Link to="/faqs" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">FAQs</Link>
-            {!(isAuthenticated && user?.role?.toLowerCase().includes('admin')) && (
-              <Link to="/support" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Support (Unknown Questions)</Link>
+
+            {/* Role-aware triage entry point.
+                - Admins see a "Triage Queue" link with a live awaiting-count badge.
+                - Normal users see a "Submit a Query" link. */}
+            {isAuthenticated && isAdmin && (
+              <Link
+                to="/admin/triage/inbox"
+                className="relative inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+              >
+                <Inbox className="h-4 w-4" />
+                Triage Queue
+                {awaitingBadge > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-600 text-white">
+                    {awaitingBadge}
+                  </span>
+                )}
+              </Link>
             )}
+
+            <Link to="/support" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Support (Unknown Questions)</Link>
             <a href="https://samagama.in" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">Samagama</a>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+            className="hidden sm:flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-400 px-3 py-1.5 rounded-md transition-colors"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden lg:inline-block">Search...</span>
+            <kbd className="hidden lg:inline-flex items-center gap-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-1.5 font-mono text-[10px] font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-xs">Ctrl</span> K
+            </kbd>
+          </button>
+
           <Button 
             variant="ghost" 
             size="icon" 
@@ -76,12 +122,12 @@ export const Navbar: React.FC = () => {
           >
             {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          
+
           {isAuthenticated && <NotificationBell />}
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button 
+            <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               title={user?.name ? `Account: ${user.name}` : 'Account'}
               className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors overflow-hidden"
@@ -105,7 +151,7 @@ export const Navbar: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     </div>
-                    {user?.role?.toLowerCase().includes('admin') ? (
+                    {isAdmin ? (
                       <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>Admin Dashboard</Link>
                     ) : (
                       <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>User Dashboard</Link>

@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "d:\\Phase 1 from G-group\\csfaq\\logs\\.50aa1841106f9cbf837ede26b3039da428abd0d9-audit.json",
+    "files": [
+        {
+            "date": 1783345898153,
+            "name": "d:\\Phase 1 from G-group\\csfaq\\logs\\access-2026-07-06.log",
+            "hash": "e85f4313d7aa9e6c5c2260ee9e640e9aa30c2154cb3fcd16e02879ab220f1126"
+        }
+    ],
+    "hashType": "sha256"
+}

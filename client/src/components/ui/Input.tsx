@@ -3,7 +3,7 @@ import { cn } from './Button';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
-  label?: string;
+  label?: React.ReactNode;
   rightElement?: React.ReactNode;
 }
 

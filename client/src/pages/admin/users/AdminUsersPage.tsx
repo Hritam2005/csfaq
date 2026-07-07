@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users, Search, Filter, UserPlus, 
-  Shield, Ban, ChevronLeft, ChevronRight
+  Shield, Ban, RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiClient } from '../../../services/axios';
@@ -36,17 +36,39 @@ export const AdminUsersPage: React.FC = () => {
     }
   });
 
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
   const suspendMutation = useMutation({
     mutationFn: (userId: string) => apiClient.put(`/admin/users/${userId}/suspend`),
-    onSuccess: () => {
-      toast.success('User suspended successfully');
+    onSuccess: (res: any) => {
+      toast.success(res.data?.message || 'User status updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: () => toast.error('Failed to suspend user')
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update user status');
+    }
   });
 
-  const handleSuspend = (userId: string) => {
-    if (window.confirm('Are you sure you want to suspend this user?')) {
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => apiClient.delete(`/admin/users/${userId}`),
+    onSuccess: (res: any) => {
+      toast.success(res.data?.message || 'User permanently deleted and wiped from MongoDB');
+      setUserToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to permanently delete user');
+    }
+  });
+
+  const handleSuspend = (userId: string, userName: string) => {
+    if (window.confirm(`Are you sure you want to suspend "${userName}"?\n\nThey will be immediately logged out and unable to log in or access the website and dashboard until rolled back.`)) {
+      suspendMutation.mutate(userId);
+    }
+  };
+
+  const handleRollback = (userId: string, userName: string) => {
+    if (window.confirm(`Are you sure you want to rollback suspension for "${userName}"?\n\nThey will immediately regain full login and dashboard access.`)) {
       suspendMutation.mutate(userId);
     }
   };
@@ -145,13 +167,38 @@ export const AdminUsersPage: React.FC = () => {
                       <Button variant="ghost" size="sm" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
                         Edit
                       </Button>
+                      {user.accountStatus === 'suspended' ? (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Rollback Suspension / Restore Access"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                          onClick={() => handleRollback(user._id, user.fullName)}
+                          disabled={suspendMutation.isPending}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Suspend User Access"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                          onClick={() => handleSuspend(user._id, user.fullName)}
+                          disabled={suspendMutation.isPending}
+                        >
+                          <Ban className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm" 
+                        title="Delete User Permanently from MongoDB"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                        onClick={() => handleSuspend(user._id)}
+                        onClick={() => setUserToDelete(user)}
+                        disabled={deleteMutation.isPending}
                       >
-                        <Ban className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </td>
@@ -201,6 +248,59 @@ export const AdminUsersPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Permanent Delete Confirmation Popup Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-6 shadow-2xl dark:border-red-900/50 dark:bg-[#0d1117] animate-slide-up">
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/80">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete User Permanently?</h3>
+                <p className="text-xs text-red-600 dark:text-red-400 font-semibold uppercase tracking-wider">Irreversible MongoDB Wipe</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              You are about to permanently delete <strong className="text-gray-900 dark:text-white font-bold">{userToDelete.fullName}</strong> (<span className="font-mono text-xs">{userToDelete.email}</span>).
+            </p>
+
+            <div className="rounded-xl bg-red-50 p-3.5 border border-red-200/80 text-xs text-red-800 dark:bg-red-950/40 dark:border-red-900/40 dark:text-red-300 mb-6 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>⚠️ Warning: Complete MongoDB Data Wipe</span>
+              </p>
+              <ul className="list-disc pl-4 space-y-0.5 text-red-700 dark:text-red-300/90">
+                <li>User account credentials and profile</li>
+                <li>All active refresh & verification tokens</li>
+                <li>Registered devices and login sessions</li>
+                <li>Submitted FAQ queries & redemptions</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setUserToDelete(null)}
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                className="bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20"
+                onClick={() => {
+                  deleteMutation.mutate(userToDelete._id);
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Wiping from MongoDB...' : 'Yes, Delete Permanently'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

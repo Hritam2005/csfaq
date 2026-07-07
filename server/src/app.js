@@ -39,6 +39,8 @@ app.use(express.urlencoded({ extended: true, limit: env.uploadLimit }));
 app.use(cookieParser()); // Parse cookies
 app.use(compression()); // Gzip compression
 app.use(morgan('combined', { stream: logStream })); // HTTP request logging
+app.use('/uploads', express.static(path.join(path.resolve(), 'uploads')));
+app.use('/api/v1/uploads', express.static(path.join(path.resolve(), 'uploads')));
 
 // =============================================================================
 // API Documentation

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { register, login, logout, refresh, getProfile, dropOutInternship, updatePassword } from '../controllers/auth.controller.js';
-import { registerValidation, loginValidation, refreshValidation } from '../validators/auth.validator.js';
+import { register, login, logout, refresh, getProfile, dropOutInternship, updatePassword, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
+import { registerValidation, loginValidation, refreshValidation, forgotPasswordValidation, resetPasswordValidation } from '../validators/auth.validator.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { authLimiter } from '../middlewares/rateLimiter.middleware.js';
 import { auditAction } from '../middlewares/audit.middleware.js';
@@ -190,6 +190,24 @@ router.put(
   '/update-password',
   authenticate,
   updatePassword
+);
+
+router.post(
+  '/forgot-password',
+  authLimiter,
+  forgotPasswordValidation,
+  validate,
+  auditAction('auth.forgot_password', 'User'),
+  forgotPassword
+);
+
+router.post(
+  '/reset-password/:token',
+  authLimiter,
+  resetPasswordValidation,
+  validate,
+  auditAction('auth.reset_password', 'User'),
+  resetPassword
 );
 
 export default router;
