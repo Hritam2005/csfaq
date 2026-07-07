@@ -42,7 +42,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -52,10 +52,10 @@ export const AdminLayout: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex h-16 flex-shrink-0 items-center px-4 border-b border-gray-200 dark:border-gray-800 justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
               <span className="text-xl font-bold text-white">A</span>
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">Admin Hub</span>
@@ -73,12 +73,12 @@ export const AdminLayout: React.FC = () => {
                   key={item.name}
                   to={item.href}
                   className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium ${isActive
-                      ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800/50'
                     }`}
                 >
                   <item.icon
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
+                    className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
                       }`}
                     aria-hidden="true"
                   />
@@ -121,7 +121,7 @@ export const AdminLayout: React.FC = () => {
             <NotificationBell />
 
             <div className="flex items-center gap-2 relative group cursor-pointer">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
                 {(user?.fullName || user?.name || 'A').charAt(0).toUpperCase()}
               </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -131,7 +131,7 @@ export const AdminLayout: React.FC = () => {
 
               <div className="absolute right-0 top-full pt-1 w-48 hidden group-hover:block z-50">
                 <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dark:bg-gray-800 dark:ring-gray-700 py-1">
-                  <button onClick={handleLogout} className="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700">
+                  <button onClick={handleLogout} className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700">
                     <LogOut className="mr-2 h-4 w-4" /> Sign out
                   </button>
                 </div>
